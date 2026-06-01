@@ -144,9 +144,9 @@ select:focus { border-color: #0f3460; box-shadow: 0 0 0 2px rgba(15,52,96,0.15);
 <div class="range-labels"><span>5 s</span><span>25 s</span></div>
 </div>
 <div class="control-group">
-<label>γ swell <span class="val" id="osGammaVal">6.0</span></label>
-<input type="range" id="osGammaSlider" min="1" max="20" step="0.1" value="6">
-<div class="range-labels"><span>γ=1</span><span>γ=20</span></div>
+<label>λ swell <span class="val" id="osLambdaVal">0.30</span></label>
+<input type="range" id="osLambdaSlider" min="0.05" max="1.0" step="0.05" value="0.3">
+<div class="range-labels"><span>λ=0.05</span><span>λ=1.0</span></div>
 </div>
 <div class="control-section-label">Wind-sea component (high freq)</div>
 <div class="control-group">
@@ -160,11 +160,11 @@ select:focus { border-color: #0f3460; box-shadow: 0 0 0 2px rgba(15,52,96,0.15);
 <div class="range-labels"><span>3 s</span><span>15 s</span></div>
 </div>
 <div class="control-group">
-<label>γ sea <span class="val" id="owGammaVal">2.5</span></label>
-<input type="range" id="owGammaSlider" min="1" max="10" step="0.1" value="2.5">
-<div class="range-labels"><span>γ=1</span><span>γ=10</span></div>
+<label>λ sea <span class="val" id="owLambdaVal">0.40</span></label>
+<input type="range" id="owLambdaSlider" min="0.05" max="1.0" step="0.05" value="0.4">
+<div class="range-labels"><span>λ=0.05</span><span>λ=1.0</span></div>
 </div>
-<div class="descr">Total H<sub>m0</sub> = √(H<sub>swell</sub>² + H<sub>sea</sub>²). Two independent JONSWAP components.</div>
+<div class="descr">Total H<sub>m0</sub> = √(H<sub>swell</sub>² + H<sub>sea</sub>²). Log-normal spectral shape per Ochi & Hubble (1976).</div>
 </div>
 
 <div id="grp_tma" class="ctrl-group">
@@ -340,12 +340,32 @@ function computePM_ITTC(Hs, Tz) {
   return { f, S };
 }
 
-function computeOchiHubble(hm0S, tpS, gamS, hm0W, tpW, gamW) {
+function ochiHubbleComponent(f, Hs, Tp, lambda) {
+  const fp = 1 / Tp;
+  const coeff = Hs * Hs / (4 * Math.sqrt(2 * Math.PI) * lambda * fp);
+  const raw = new Float64Array(N_FINE);
+  for (let i = 0; i < N_FINE; i++) {
+    const fi = f[i];
+    if (fi <= 0) { raw[i] = 0; continue; }
+    const r = fi / fp;
+    const lnR = Math.log(r);
+    raw[i] = coeff * Math.pow(r, -4) * Math.exp(-(lnR * lnR) / (2 * lambda * lambda));
+  }
+  let m0 = 0;
+  for (let i = 1; i < N_FINE; i++) m0 += (raw[i] + raw[i-1]) * 0.5 * (f[i] - f[i-1]);
+  const target = Hs * Hs / 16;
+  const scale = m0 > 0 ? target / m0 : 1;
+  const S = new Float64Array(N_FINE);
+  for (let i = 0; i < N_FINE; i++) S[i] = raw[i] * scale;
+  return S;
+}
+
+function computeOchiHubble(hm0S, tpS, lamS, hm0W, tpW, lamW) {
   const fpS = 1 / tpS, fpW = 1 / tpW;
   const fpEff = Math.min(fpS, fpW);
   const f = freqGrid(fpEff);
-  const Ss = normJonswap(f, hm0S, tpS, gamS);
-  const Sw = normJonswap(f, hm0W, tpW, gamW);
+  const Ss = ochiHubbleComponent(f, hm0S, tpS, lamS);
+  const Sw = ochiHubbleComponent(f, hm0W, tpW, lamW);
   const S = new Float64Array(N_FINE);
   for (let i = 0; i < N_FINE; i++) S[i] = Ss[i] + Sw[i];
   return { f, S, S_swell: Ss, S_windsea: Sw };
@@ -419,11 +439,11 @@ function computeCurrent() {
     case 'ochi-hubble': {
       const osH = parseFloat(document.getElementById('osHm0Slider').value);
       const osT = parseFloat(document.getElementById('osTpSlider').value);
-      const osG = parseFloat(document.getElementById('osGammaSlider').value);
+      const osL = parseFloat(document.getElementById('osLambdaSlider').value);
       const owH = parseFloat(document.getElementById('owHm0Slider').value);
       const owT = parseFloat(document.getElementById('owTpSlider').value);
-      const owG = parseFloat(document.getElementById('owGammaSlider').value);
-      return computeOchiHubble(osH, osT, osG, owH, owT, owG);
+      const owL = parseFloat(document.getElementById('owLambdaSlider').value);
+      return computeOchiHubble(osH, osT, osL, owH, owT, owL);
     }
     case 'tma':
       return computeTMA(
@@ -677,16 +697,16 @@ function updateSensitivity(type) {
   } else if (type === 'ochi-hubble') {
     const osH = parseFloat(document.getElementById('osHm0Slider').value);
     const osT = parseFloat(document.getElementById('osTpSlider').value);
-    const osG = parseFloat(document.getElementById('osGammaSlider').value);
+    const osL = parseFloat(document.getElementById('osLambdaSlider').value);
     const owH = parseFloat(document.getElementById('owHm0Slider').value);
     const owT = parseFloat(document.getElementById('owTpSlider').value);
-    const owG = parseFloat(document.getElementById('owGammaSlider').value);
-    document.getElementById('sensTitle0').textContent = 'T\u209A Swell';
-    document.getElementById('sensTitle1').textContent = 'T\u209A Sea';
+    const owL = parseFloat(document.getElementById('owLambdaSlider').value);
+    document.getElementById('sensTitle0').textContent = '\u03BB Swell';
+    document.getElementById('sensTitle1').textContent = '\u03BB Sea';
     document.getElementById('sensTitle2').textContent = 'Total H\u209B';
-    sweepParam(makeFn(t => { const tp = 5 + t * 20; const s = computeOchiHubble(osH, tp, osG, owH, owT, owG); return { x: tp, y: s.S[peakIndex(s.S)] }; }), 'T\u209A_swell (s)', 20, 0);
-    sweepParam(makeFn(t => { const tp = 3 + t * 12; const s = computeOchiHubble(osH, osT, osG, owH, tp, owG); return { x: tp, y: s.S[peakIndex(s.S)] }; }), 'T\u209A_sea (s)', 20, 1);
-    sweepParam(makeFn(t => { const tot = 0.2 + t * 11; const ratio = owH / Math.max(osH + owH, 0.01); const hS = Math.sqrt((1 - ratio) * tot * tot); const hW = Math.sqrt(ratio * tot * tot); const s = computeOchiHubble(hS, osT, osG, hW, owT, owG); return { x: tot, y: s.S[peakIndex(s.S)] }; }), 'H\u209B_tot (m)', 20, 2);
+    sweepParam(makeFn(t => { const lam = 0.05 + t * 0.95; const s = computeOchiHubble(osH, osT, lam, owH, owT, owL); return { x: lam, y: s.S[peakIndex(s.S)] }; }), '\u03BB_swell', 20, 0);
+    sweepParam(makeFn(t => { const lam = 0.05 + t * 0.95; const s = computeOchiHubble(osH, osT, osL, owH, owT, lam); return { x: lam, y: s.S[peakIndex(s.S)] }; }), '\u03BB_sea', 20, 1);
+    sweepParam(makeFn(t => { const tot = 0.2 + t * 11; const ratio = owH / Math.max(osH + owH, 0.01); const hS = Math.sqrt((1 - ratio) * tot * tot); const hW = Math.sqrt(ratio * tot * tot); const s = computeOchiHubble(hS, osT, osL, hW, owT, owL); return { x: tot, y: s.S[peakIndex(s.S)] }; }), 'H\u209B_tot (m)', 20, 2);
   } else if (type === 'tma') {
     const Hm0 = parseFloat(document.getElementById('tHm0Slider').value);
     const Tp = parseFloat(document.getElementById('tTpSlider').value);
@@ -761,18 +781,18 @@ function generateReport() {
   } else if (type === 'ochi-hubble') {
     const osH = parseFloat(document.getElementById('osHm0Slider').value);
     const osT = parseFloat(document.getElementById('osTpSlider').value);
-    const osG = parseFloat(document.getElementById('osGammaSlider').value);
+    const osL = parseFloat(document.getElementById('osLambdaSlider').value);
     const owH = parseFloat(document.getElementById('owHm0Slider').value);
     const owT = parseFloat(document.getElementById('owTpSlider').value);
-    const owG = parseFloat(document.getElementById('owGammaSlider').value);
+    const owL = parseFloat(document.getElementById('owLambdaSlider').value);
     const totalHm0 = Math.sqrt(osH * osH + owH * owH);
-    html += '<tr><td>Model</td><td>Ochi-Hubble (bimodal)</td><td>Two-component swell+sea</td></tr>';
+    html += '<tr><td>Model</td><td>Ochi-Hubble (bimodal)</td><td>Two-component log-normal swell+sea</td></tr>';
     html += '<tr><td>H<sub>s</sub> swell</td><td>' + osH.toFixed(2) + ' m</td><td>Swell component height</td></tr>';
     html += '<tr><td>T<sub>p</sub> swell</td><td>' + gT(osT) + '</td><td>Swell peak period</td></tr>';
-    html += '<tr><td>\u03B3 swell</td><td>' + osG.toFixed(1) + '</td><td>Swell peakedness</td></tr>';
+    html += '<tr><td>\u03BB swell</td><td>' + osL.toFixed(2) + '</td><td>Swell spectral width (log-normal shape)</td></tr>';
     html += '<tr><td>H<sub>s</sub> sea</td><td>' + owH.toFixed(2) + ' m</td><td>Wind-sea component height</td></tr>';
     html += '<tr><td>T<sub>p</sub> sea</td><td>' + gT(owT) + '</td><td>Wind-sea peak period</td></tr>';
-    html += '<tr><td>\u03B3 sea</td><td>' + owG.toFixed(1) + '</td><td>Wind-sea peakedness</td></tr>';
+    html += '<tr><td>\u03BB sea</td><td>' + owL.toFixed(2) + '</td><td>Wind-sea spectral width (log-normal shape)</td></tr>';
     html += '<tr><td>H<sub>s</sub> total</td><td>' + totalHm0.toFixed(2) + ' m</td><td>\u221A(H<sub>swell</sub>\u00B2 + H<sub>sea</sub>\u00B2)</td></tr>';
   } else if (type === 'tma') {
     const Hm0 = parseFloat(document.getElementById('tHm0Slider').value);
@@ -839,7 +859,7 @@ function generateReport() {
   } else if (type === 'pm-ittc') {
     html += 'The ITTC formulation using T<sub>z</sub> is common in naval architecture and ship design. T<sub>z</sub> is more readily available from wave records than T<sub>p</sub>. The implied T<sub>p</sub> = 1.408\u00D7T<sub>z</sub> relationship is fixed.';
   } else if (type === 'ochi-hubble') {
-    html += 'Bimodal seas can excite two distinct structural resonances. Fatigue assessment should account for the combined energy distribution. The swell component often carries energy at periods longer than the first structural mode, while the wind-sea component may excite higher modes.';
+    html += 'Bimodal seas can excite two distinct structural resonances. Fatigue assessment should account for the combined energy distribution. The swell component often carries energy at periods longer than the first structural mode, while the wind-sea component may excite higher modes. The \u03BB (shape) parameter controls the spectral width of each log-normal component: smaller \u03BB gives a narrower, more peaked spectrum; larger \u03BB produces a broader, flatter shape.';
   } else if (type === 'tma') {
     html += 'In finite depth, the high-frequency tail is suppressed by the TMA depth factor. This reduces spectral density at frequencies above the peak, decreasing fatigue damage rates for structures with high natural frequencies (e.g., wind turbine blades, deck equipment).';
   } else if (type === 'white-noise') {
@@ -865,7 +885,7 @@ function setupControl(id, valId, update) {
       const isH = id.toLowerCase().includes('hm0') || id.toLowerCase().includes('hs') || id.match(/^osH/) || id.match(/^owH/) || (id.startsWith('r') && id.includes('H'));
       const isT = id.toLowerCase().includes('tp') || id.toLowerCase().includes('tz') || id.includes('Tp') || id.includes('Tz') || id.includes('Tp') || id.includes('Tz') || (id.startsWith('r') && id.includes('T'));
       const isDepth = id.includes('depth');
-      const isGamma = id.includes('Gamma');
+      const isGamma = id.includes('Gamma') || id.includes('Lambda');
       if (isDepth) valEl.textContent = v.toFixed(0) + ' m';
       else if (isGamma) valEl.textContent = v.toFixed(2);
       else if (isH) valEl.textContent = v.toFixed(1) + ' m';
@@ -886,10 +906,10 @@ setupControl('iHsSlider', 'iHsVal', updateAll);
 setupControl('iTzSlider', 'iTzVal', updateAll);
 setupControl('osHm0Slider', 'osHm0Val', updateAll);
 setupControl('osTpSlider', 'osTpVal', updateAll);
-setupControl('osGammaSlider', 'osGammaVal', updateAll);
+setupControl('osLambdaSlider', 'osLambdaVal', updateAll);
 setupControl('owHm0Slider', 'owHm0Val', updateAll);
 setupControl('owTpSlider', 'owTpVal', updateAll);
-setupControl('owGammaSlider', 'owGammaVal', updateAll);
+setupControl('owLambdaSlider', 'owLambdaVal', updateAll);
 setupControl('tHm0Slider', 'tHm0Val', updateAll);
 setupControl('tTpSlider', 'tTpVal', updateAll);
 setupControl('tGammaSlider', 'tGammaVal', updateAll);

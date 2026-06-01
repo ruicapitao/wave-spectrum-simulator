@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Wave Spectrum Simulator</title>
+<title>Empirical Spectrum Simulator</title>
 <script src="https://cdn.plot.ly/plotly-2.35.0.min.js"></script>
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -30,21 +30,18 @@ select:focus { border-color: #0f3460; box-shadow: 0 0 0 2px rgba(15,52,96,0.15);
 .state-windsea { background: #fee2e2; color: #bc1c1c; }
 .state-swell { background: #dbeafe; color: #1a56db; }
 .state-transition { background: #fef3c7; color: #b45309; }
+.state-neutral { background: #e8ecf0; color: #4a5a6a; }
 .plot-area { padding: 20px; min-height: 420px; }
 #spectrumPlot { width: 100%; height: 420px; }
-.params-strip { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; padding: 14px 20px; background: #f8f9fb; border-top: 1px solid #e8ecf0; }
+.params-strip { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; padding: 12px 16px; background: #f8f9fb; border-top: 1px solid #e8ecf0; }
 .param-card { text-align: center; }
-.param-card .label { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.06em; color: #7a8a9a; }
-.param-card .value { font-size: 1.05rem; font-weight: 700; color: #0f3460; font-family: 'JetBrains Mono', 'Consolas', monospace; }
-.param-card .value .unit { font-size: 0.7rem; font-weight: 400; color: #8a9aaa; }
+.param-card .label { font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.06em; color: #7a8a9a; }
+.param-card .value { font-size: 1rem; font-weight: 700; color: #0f3460; font-family: 'JetBrains Mono', 'Consolas', monospace; }
+.param-card .value .unit { font-size: 0.68rem; font-weight: 400; color: #8a9aaa; }
 .section { padding: 24px; background: white; border-radius: 12px; box-shadow: 0 4px 24px rgba(0,0,0,0.06); margin-top: 20px; }
 .section h2 { font-size: 1rem; font-weight: 600; margin-bottom: 16px; color: #0f3460; }
 .sens-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
-.sens-plot { height: 200px; }
-.sens-table { width: 100%; border-collapse: collapse; font-size: 0.72rem; margin-top: 6px; }
-.sens-table th { background: #f0f2f5; text-align: right; padding: 3px 6px; font-weight: 600; color: #2a3a4a; }
-.sens-table td { text-align: right; padding: 3px 6px; border-bottom: 1px solid #e8ecf0; font-family: 'JetBrains Mono', 'Consolas', monospace; }
-.sens-table th:first-child, .sens-table td:first-child { text-align: left; }
+.sens-plot { height: 220px; }
 .report-btn { background: #0f3460; color: white; border: none; padding: 12px 32px; border-radius: 8px; font-size: 0.9rem; font-weight: 600; cursor: pointer; transition: background 0.2s; }
 .report-btn:hover { background: #16213e; }
 #reportContent { display: none; margin-top: 20px; padding: 24px; background: #fafbfc; border: 1px solid #e8ecf0; border-radius: 8px; font-size: 0.85rem; line-height: 1.7; }
@@ -56,7 +53,6 @@ select:focus { border-color: #0f3460; box-shadow: 0 0 0 2px rgba(15,52,96,0.15);
 #reportContent td:first-child { text-align: left; font-weight: 500; }
 #reportContent .highlight { background: #fef9e7; padding: 8px 12px; border-left: 3px solid #f59e0b; border-radius: 4px; margin: 8px 0; font-size: 0.82rem; }
 .descr { font-size: 0.72rem; color: #6a7a8a; margin: -6px 0 10px; }
-.warning-badge { display: inline-block; padding: 1px 8px; border-radius: 10px; font-size: 0.62rem; font-weight: 600; background: #fef3c7; color: #b45309; }
 @media (max-width: 900px) { .main-layout { grid-template-columns: 1fr; } .controls-panel { border-right: none; border-bottom: 1px solid #e8ecf0; max-height: none; } .sens-grid { grid-template-columns: 1fr; } }
 </style>
 </head>
@@ -64,10 +60,10 @@ select:focus { border-color: #0f3460; box-shadow: 0 0 0 2px rgba(15,52,96,0.15);
 <div class="container">
 <header>
 <div>
-<h1>Wave Spectrum Simulator</h1>
-<p>JONSWAP &middot; Bretschneider &middot; Ochi-Hubble (bimodal) &middot; TMA (shallow water)</p>
+<h1>Empirical Spectrum Simulator</h1>
+<p>JONSWAP &middot; PM Generalized &middot; PM ITTC &middot; Ochi-Hubble &middot; TMA &middot; White Noise &middot; Regular Wave</p>
 </div>
-<div id="stateBadge" class="state-badge state-transition">Transition Sea</div>
+<div id="stateBadge" class="state-badge state-neutral">Select a model</div>
 </header>
 <div class="main-layout">
 <div class="controls-panel">
@@ -75,17 +71,20 @@ select:focus { border-color: #0f3460; box-shadow: 0 0 0 2px rgba(15,52,96,0.15);
 <div class="control-group">
 <label>Spectrum Model</label>
 <select id="spectrumType" onchange="onTypeChange()">
-<option value="jonswap">JONSWAP — deep water, developing sea</option>
-<option value="bretschneider">Bretschneider — 2-parameter, general purpose</option>
-<option value="ochi-hubble">Ochi-Hubble — bimodal swell+sea</option>
-<option value="tma">TMA — shallow water (coastal)</option>
+<option value="jonswap">JONSWAP (H<sub>s</sub>, T<sub>p</sub>, γ)</option>
+<option value="pm-generalized">PM Generalized (H<sub>s</sub>, T<sub>p</sub>)</option>
+<option value="pm-ittc">PM ITTC (H<sub>s</sub>, T<sub>z</sub>)</option>
+<option value="ochi-hubble">Ochi-Hubble (bimodal swell+sea)</option>
+<option value="tma">TMA — shallow water (H<sub>s</sub>, T<sub>p</sub>, γ, d)</option>
+<option value="white-noise">White Noise (H<sub>s</sub>)</option>
+<option value="regular-wave">Regular Wave (H, T)</option>
 </select>
 </div>
 
 <div id="grp_jonswap" class="ctrl-group active">
 <div class="control-group">
 <label>Significant Wave Height <span class="val" id="hm0Val">2.50 m</span></label>
-<input type="range" id="hm0Slider" min="0.5" max="12" step="0.1" value="2.5">
+<input type="range" id="hm0Slider" min="0.5" max="12" step="0.1" value="2.5" list="hm0Ticks">
 <div class="range-labels"><span>0.5 m</span><span>12 m</span></div>
 </div>
 <div class="control-group">
@@ -95,24 +94,41 @@ select:focus { border-color: #0f3460; box-shadow: 0 0 0 2px rgba(15,52,96,0.15);
 </div>
 <div class="control-group">
 <label>Peakedness γ <span class="val" id="gammaVal">3.30</span></label>
-<input type="range" id="gammaSlider" min="1" max="50" step="0.1" value="3.3">
-<div class="range-labels"><span>γ=1 (PM)</span><span>γ=50</span></div>
+<input type="range" id="gammaSlider" min="1" max="10" step="0.1" value="3.3" list="gammaTicks">
+<datalist id="gammaTicks">
+<option value="1" label="PM">1</option><option value="3.3" label="JONSWAP">3.3</option><option value="7">7</option><option value="10">10</option>
+</datalist>
+<div class="range-labels"><span>γ=1 (PM)</span><span>γ=3.3</span><span>γ=7</span><span>γ=10</span></div>
 </div>
 <div id="gammaDesc" class="descr" style="margin-top:-10px;">Mature wind-sea / young swell</div>
 </div>
 
-<div id="grp_bretschneider" class="ctrl-group">
+<div id="grp_pm-generalized" class="ctrl-group">
 <div class="control-group">
-<label>Significant Wave Height <span class="val" id="bHm0Val">2.50 m</span></label>
-<input type="range" id="bHm0Slider" min="0.5" max="12" step="0.1" value="2.5">
+<label>Significant Wave Height <span class="val" id="gHm0Val">2.50 m</span></label>
+<input type="range" id="gHm0Slider" min="0.5" max="12" step="0.1" value="2.5">
 <div class="range-labels"><span>0.5 m</span><span>12 m</span></div>
 </div>
 <div class="control-group">
-<label>Peak Period <span class="val" id="bTpVal">10.0 s</span></label>
-<input type="range" id="bTpSlider" min="3" max="25" step="0.5" value="10">
+<label>Peak Period <span class="val" id="gTpVal">10.0 s</span></label>
+<input type="range" id="gTpSlider" min="3" max="25" step="0.5" value="10">
 <div class="range-labels"><span>3 s</span><span>25 s</span></div>
 </div>
-<div class="descr">Two-parameter spectrum (Pierson–Moskowitz generalised).<br>γ fixed at 1.</div>
+<div class="descr">Generalised Pierson–Moskowitz (γ fixed at 1).</div>
+</div>
+
+<div id="grp_pm-ittc" class="ctrl-group">
+<div class="control-group">
+<label>Significant Wave Height <span class="val" id="iHsVal">2.50 m</span></label>
+<input type="range" id="iHsSlider" min="0.5" max="12" step="0.1" value="2.5">
+<div class="range-labels"><span>0.5 m</span><span>12 m</span></div>
+</div>
+<div class="control-group">
+<label>Zero-Crossing Period <span class="val" id="iTzVal">8.0 s</span></label>
+<input type="range" id="iTzSlider" min="2" max="20" step="0.5" value="8">
+<div class="range-labels"><span>2 s</span><span>20 s</span></div>
+</div>
+<div class="descr">ITTC formulation using T<sub>z</sub> instead of T<sub>p</sub>.</div>
 </div>
 
 <div id="grp_ochi" class="ctrl-group">
@@ -148,7 +164,7 @@ select:focus { border-color: #0f3460; box-shadow: 0 0 0 2px rgba(15,52,96,0.15);
 <input type="range" id="owGammaSlider" min="1" max="10" step="0.1" value="2.5">
 <div class="range-labels"><span>γ=1</span><span>γ=10</span></div>
 </div>
-<div class="descr">Total H<sub>m0</sub> = √(H<sub>swell</sub>² + H<sub>sea</sub>²). Two independent JONSWAP components with separate γ, T<sub>p</sub>.</div>
+<div class="descr">Total H<sub>m0</sub> = √(H<sub>swell</sub>² + H<sub>sea</sub>²). Two independent JONSWAP components.</div>
 </div>
 
 <div id="grp_tma" class="ctrl-group">
@@ -174,6 +190,29 @@ select:focus { border-color: #0f3460; box-shadow: 0 0 0 2px rgba(15,52,96,0.15);
 </div>
 <div id="depthDesc" class="descr" style="margin-top:-10px;">Shallow water modifies high-frequency tail.</div>
 </div>
+
+<div id="grp_white-noise" class="ctrl-group">
+<div class="control-group">
+<label>Significant Wave Height <span class="val" id="wHsVal">2.50 m</span></label>
+<input type="range" id="wHsSlider" min="0.5" max="12" step="0.1" value="2.5">
+<div class="range-labels"><span>0.5 m</span><span>12 m</span></div>
+</div>
+<div class="descr">Flat spectrum: S(f) = const. Energy spread uniformly across frequencies.</div>
+</div>
+
+<div id="grp_regular-wave" class="ctrl-group">
+<div class="control-group">
+<label>Wave Height <span class="val" id="rHVal">2.00 m</span></label>
+<input type="range" id="rHSlider" min="0.1" max="10" step="0.1" value="2">
+<div class="range-labels"><span>0.1 m</span><span>10 m</span></div>
+</div>
+<div class="control-group">
+<label>Wave Period <span class="val" id="rTVal">8.0 s</span></label>
+<input type="range" id="rTSlider" min="3" max="25" step="0.5" value="8">
+<div class="range-labels"><span>3 s</span><span>25 s</span></div>
+</div>
+<div class="descr">Monochromatic wave — narrow Gaussian spike (σ=0.003 Hz) approximating a Dirac delta.</div>
+</div>
 </div>
 
 <div class="plot-area">
@@ -186,17 +225,17 @@ select:focus { border-color: #0f3460; box-shadow: 0 0 0 2px rgba(15,52,96,0.15);
 <div class="param-card"><div class="label">Peak Spectral Density</div><div class="value" id="dispPeakS">— <span class="unit">m²/Hz</span></div></div>
 <div class="param-card"><div class="label">Spectral Width ε</div><div class="value" id="dispEpsilon">—</div></div>
 <div class="param-card"><div class="label">Energy Period T<sub>e</sub></div><div class="value" id="dispTe">— <span class="unit">s</span></div></div>
-<div class="param-card"><div class="label">H<sub>m0</sub> (check)</div><div class="value" id="dispCheckHm0">— <span class="unit">m</span></div></div>
+<div class="param-card"><div class="label">H<sub>s</sub> (check)</div><div class="value" id="dispCheckHm0">— <span class="unit">m</span></div></div>
 <div class="param-card"><div class="label">Zero-crossing T<sub>z</sub></div><div class="value" id="dispTz">— <span class="unit">s</span></div></div>
 </div>
 
 <div class="section">
 <h2>Sensitivity Analysis</h2>
-<p id="sensDesc" style="font-size:0.82rem;color:#5a6a7a;margin-bottom:12px;">Each plot shows how peak spectral density varies as one parameter is swept across its range while others are held at current values.</p>
+<p id="sensDesc" style="font-size:0.82rem;color:#5a6a7a;margin-bottom:12px;">Each plot shows how peak spectral density varies as one parameter is swept across its range.</p>
 <div class="sens-grid">
-<div id="sensPanel0"><h3 id="sensTitle0" style="font-size:0.8rem;margin-bottom:4px;color:#2a3a4a;">γ Sensitivity</h3><div id="sensPlot0" class="sens-plot"></div><table class="sens-table" id="tblSens0"><tr><th>Param</th><th>S<sub>peak</sub></th><th>% change</th></tr></table></div>
-<div id="sensPanel1"><h3 id="sensTitle1" style="font-size:0.8rem;margin-bottom:4px;color:#2a3a4a;">H<sub>m0</sub> Sensitivity</h3><div id="sensPlot1" class="sens-plot"></div><table class="sens-table" id="tblSens1"><tr><th>Param</th><th>S<sub>peak</sub></th><th>% change</th></tr></table></div>
-<div id="sensPanel2"><h3 id="sensTitle2" style="font-size:0.8rem;margin-bottom:4px;color:#2a3a4a;">T<sub>p</sub> Sensitivity</h3><div id="sensPlot2" class="sens-plot"></div><table class="sens-table" id="tblSens2"><tr><th>Param</th><th>S<sub>peak</sub></th><th>% change</th></tr></table></div>
+<div id="sensPanel0"><h3 id="sensTitle0" style="font-size:0.8rem;margin-bottom:4px;color:#2a3a4a;">γ Sensitivity</h3><div id="sensPlot0" class="sens-plot"></div></div>
+<div id="sensPanel1"><h3 id="sensTitle1" style="font-size:0.8rem;margin-bottom:4px;color:#2a3a4a;">H<sub>s</sub> Sensitivity</h3><div id="sensPlot1" class="sens-plot"></div></div>
+<div id="sensPanel2"><h3 id="sensTitle2" style="font-size:0.8rem;margin-bottom:4px;color:#2a3a4a;">T<sub>p</sub> Sensitivity</h3><div id="sensPlot2" class="sens-plot"></div></div>
 </div>
 </div>
 
@@ -210,12 +249,16 @@ select:focus { border-color: #0f3460; box-shadow: 0 0 0 2px rgba(15,52,96,0.15);
 const N_FINE = 4000, N_PLOT = 800, G = 9.81;
 let currentType = 'jonswap';
 
+function linspace(a, b, n) {
+  const f = new Float64Array(n);
+  for (let i = 0; i < n; i++) f[i] = a + (b - a) * i / (n - 1);
+  return f;
+}
+
 function freqGrid(fp) {
   const fMin = Math.max(0.005, 0.12 * fp);
   const fMax = Math.min(5.0, 7.0 * fp);
-  const f = new Float64Array(N_FINE);
-  for (let i = 0; i < N_FINE; i++) f[i] = fMin + (fMax - fMin) * i / (N_FINE - 1);
-  return f;
+  return linspace(fMin, fMax, N_FINE);
 }
 
 function normJonswap(f, Hm0, Tp, gamma) {
@@ -272,10 +315,28 @@ function computeJonswap(Hm0, Tp, gamma) {
   return { f, S };
 }
 
-function computeBretschneider(Hm0, Tp) {
+function computePMGeneralized(Hm0, Tp) {
   const fp = 1 / Tp;
   const f = freqGrid(fp);
   const S = normJonswap(f, Hm0, Tp, 1);
+  return { f, S };
+}
+
+function computePM_ITTC(Hs, Tz) {
+  const fp = 0.71 / Tz;
+  const f = freqGrid(fp);
+  const S = new Float64Array(N_FINE);
+  for (let i = 0; i < N_FINE; i++) {
+    const fi = f[i];
+    if (fi <= 0) { S[i] = 0; continue; }
+    const zf = Tz * fi;
+    S[i] = 0.11 * Hs * Hs * Tz * Math.pow(zf, -5) * Math.exp(-0.44 * Math.pow(zf, -4));
+  }
+  let m0 = 0;
+  for (let i = 1; i < N_FINE; i++) m0 += (S[i] + S[i-1]) * 0.5 * (f[i] - f[i-1]);
+  const target = Hs * Hs / 16;
+  const scale = m0 > 0 ? target / m0 : 1;
+  for (let i = 0; i < N_FINE; i++) S[i] *= scale;
   return { f, S };
 }
 
@@ -304,7 +365,35 @@ function computeTMA(Hm0, Tp, gamma, depth) {
   const target = Hm0 * Hm0 / 16;
   const scale = m0 > 0 ? target / m0 : 1;
   for (let i = 0; i < N_FINE; i++) S[i] *= scale;
-  return { f, S, depthFactor: tmaDepthFunc };
+  return { f, S };
+}
+
+function computeWhiteNoise(Hs) {
+  const fMin = 0.01, fMax = 1.0;
+  const f = linspace(fMin, fMax, N_FINE);
+  const constVal = Hs * Hs / (16 * (fMax - fMin));
+  const S = new Float64Array(N_FINE);
+  for (let i = 0; i < N_FINE; i++) S[i] = constVal;
+  return { f, S };
+}
+
+function computeRegularWave(H, T) {
+  const fp = 1 / T;
+  const sigma = 0.003;
+  const fMin = Math.max(0.001, fp - 6 * sigma);
+  const fMax = fp + 6 * sigma;
+  const f = linspace(fMin, fMax, N_FINE);
+  const S = new Float64Array(N_FINE);
+  const norm = H * H / 8;
+  for (let i = 0; i < N_FINE; i++) {
+    S[i] = norm * Math.exp(-(f[i] - fp) * (f[i] - fp) / (2 * sigma * sigma)) / (sigma * Math.sqrt(2 * Math.PI));
+  }
+  let m0 = 0;
+  for (let i = 1; i < N_FINE; i++) m0 += (S[i] + S[i-1]) * 0.5 * (f[i] - f[i-1]);
+  const target = H * H / 8;
+  const scale = m0 > 0 ? target / m0 : 1;
+  for (let i = 0; i < N_FINE; i++) S[i] *= scale;
+  return { f, S };
 }
 
 function computeCurrent() {
@@ -317,10 +406,15 @@ function computeCurrent() {
         parseFloat(document.getElementById('tpSlider').value),
         parseFloat(document.getElementById('gammaSlider').value)
       );
-    case 'bretschneider':
-      return computeBretschneider(
-        parseFloat(document.getElementById('bHm0Slider').value),
-        parseFloat(document.getElementById('bTpSlider').value)
+    case 'pm-generalized':
+      return computePMGeneralized(
+        parseFloat(document.getElementById('gHm0Slider').value),
+        parseFloat(document.getElementById('gTpSlider').value)
+      );
+    case 'pm-ittc':
+      return computePM_ITTC(
+        parseFloat(document.getElementById('iHsSlider').value),
+        parseFloat(document.getElementById('iTzSlider').value)
       );
     case 'ochi-hubble': {
       const osH = parseFloat(document.getElementById('osHm0Slider').value);
@@ -338,13 +432,16 @@ function computeCurrent() {
         parseFloat(document.getElementById('tGammaSlider').value),
         parseFloat(document.getElementById('depthSlider').value)
       );
+    case 'white-noise':
+      return computeWhiteNoise(
+        parseFloat(document.getElementById('wHsSlider').value)
+      );
+    case 'regular-wave':
+      return computeRegularWave(
+        parseFloat(document.getElementById('rHSlider').value),
+        parseFloat(document.getElementById('rTSlider').value)
+      );
   }
-}
-
-function integrate(f, S) {
-  let sum = 0;
-  for (let i = 1; i < f.length; i++) sum += (S[i] + S[i-1]) * 0.5 * (f[i] - f[i-1]);
-  return sum;
 }
 
 function spectralMoments(f, S) {
@@ -373,16 +470,6 @@ function downsample(f, S, n) {
   const of = new Float64Array(len), oS = new Float64Array(len);
   for (let i = 0, j = 0; i < f.length; i += step, j++) { of[j] = f[i]; oS[j] = S[i]; }
   return { f: of, S: oS };
-}
-
-function pluralSuffix(vals) {
-  return vals.length === 1 ? '' : 's';
-}
-
-function getPlotRangeFromResult(res) {
-  const pkIdx = peakIndex(res.S);
-  const pkF = res.f[pkIdx], pkS = res.S[pkIdx];
-  return { xLo: Math.max(0, pkF * 0.12), xHi: Math.min(3.0, pkF * 5.0), yHi: pkS * 1.3 + 0.05, pkF, pkS };
 }
 
 function onTypeChange() {
@@ -416,23 +503,27 @@ function updateAll() {
   document.getElementById('dispCheckHm0').innerHTML = Hm0Check.toFixed(3) + ' <span class="unit">m</span>';
   document.getElementById('dispTz').innerHTML = Tz.toFixed(2) + ' <span class="unit">s</span>';
 
-  const totalHm0 = Math.sqrt(mom.m0) * 4;
-  let seaDesc = '', seaClass = 'state-transition';
-  let badgeText = type.toUpperCase().replace('-', ' ');
-  if (type === 'jonswap' || type === 'tma' || type === 'bretschneider') {
-    const gamma = type === 'bretschneider' ? 1 : type === 'tma'
-      ? parseFloat(document.getElementById('tGammaSlider').value)
-      : parseFloat(document.getElementById('gammaSlider').value);
+  let badgeText = '', seaClass = 'state-transition';
+  if (type === 'jonswap') {
+    const gamma = parseFloat(document.getElementById('gammaSlider').value);
     if (gamma < 1.5) { badgeText = 'Broad Wind-Sea'; seaClass = 'state-windsea'; }
     else if (gamma < 2.5) { badgeText = 'Wind-Sea'; seaClass = 'state-windsea'; }
     else if (gamma < 4) { badgeText = 'Transition Sea'; seaClass = 'state-transition'; }
     else if (gamma < 6) { badgeText = 'Young Swell'; seaClass = 'state-swell'; }
-    else if (gamma < 10) { badgeText = 'Swell'; seaClass = 'state-swell'; }
-    else if (gamma < 20) { badgeText = 'Mature Swell'; seaClass = 'state-swell'; }
-    else { badgeText = 'Narrow-Band Swell'; seaClass = 'state-swell'; }
+    else { badgeText = 'Swell'; seaClass = 'state-swell'; }
+  } else if (type === 'pm-generalized' || type === 'pm-ittc') {
+    badgeText = 'PM Spectrum'; seaClass = 'state-windsea';
   } else if (type === 'ochi-hubble') {
-    badgeText = 'Bimodal: Swell + Wind-Sea';
-    seaClass = 'state-transition';
+    badgeText = 'Bimodal: Swell + Wind-Sea'; seaClass = 'state-transition';
+  } else if (type === 'tma') {
+    const gamma = parseFloat(document.getElementById('tGammaSlider').value);
+    if (gamma < 2.5) { badgeText = 'TMA Wind-Sea'; seaClass = 'state-windsea'; }
+    else if (gamma < 4) { badgeText = 'TMA Transition'; seaClass = 'state-transition'; }
+    else { badgeText = 'TMA Swell'; seaClass = 'state-swell'; }
+  } else if (type === 'white-noise') {
+    badgeText = 'White Noise'; seaClass = 'state-neutral';
+  } else if (type === 'regular-wave') {
+    badgeText = 'Monochromatic'; seaClass = 'state-neutral';
   }
   const badge = document.getElementById('stateBadge');
   badge.textContent = badgeText;
@@ -443,7 +534,14 @@ function updateAll() {
   const plotData = downsample(res.f, res.S, N_PLOT);
 
   let extraTraces = [];
-  let mainName = type === 'jonswap' ? 'JONSWAP' : type === 'bretschneider' ? 'Bretschneider' : type === 'ochi-hubble' ? 'Ochi-Hubble (total)' : 'TMA';
+  let mainName = type;
+  if (type === 'jonswap') mainName = 'JONSWAP \u03B3=' + parseFloat(document.getElementById('gammaSlider').value).toFixed(2);
+  else if (type === 'pm-generalized') mainName = 'PM Generalized';
+  else if (type === 'pm-ittc') mainName = 'PM ITTC (T\u2092)';
+  else if (type === 'ochi-hubble') mainName = 'Ochi-Hubble (total)';
+  else if (type === 'tma') { const d = parseFloat(document.getElementById('depthSlider').value); mainName = 'TMA (depth=' + d + ' m)'; }
+  else if (type === 'white-noise') mainName = 'White Noise';
+  else if (type === 'regular-wave') { const T = parseFloat(document.getElementById('rTSlider').value); mainName = 'Regular Wave (T=' + T.toFixed(1) + ' s)'; }
 
   if (type === 'ochi-hubble' && res.S_swell && res.S_windsea) {
     const dsSwell = downsample(res.f, res.S_swell, N_PLOT);
@@ -471,12 +569,6 @@ function updateAll() {
       type: 'scatter', mode: 'lines', name: 'Deep-water equiv.',
       line: { color: '#7a8a9a', width: 1.5, dash: 'dash' }
     });
-    const depth = parseFloat(document.getElementById('depthSlider').value);
-    mainName = 'TMA (depth=' + depth + ' m)';
-  }
-
-  if (type === 'bretschneider') {
-    mainName = 'Bretschneider (PM)';
   }
 
   const traces = [{
@@ -492,7 +584,7 @@ function updateAll() {
 
   const layout = {
     xaxis: { title: 'Frequency (Hz)', range: xRange, zeroline: false, gridcolor: '#e8ecf0' },
-    yaxis: { title: 'S(f) (m²/Hz)', rangemode: 'nonnegative', gridcolor: '#e8ecf0', zeroline: false },
+    yaxis: { title: 'S(f) (m\u00B2/Hz)', rangemode: 'nonnegative', gridcolor: '#e8ecf0', zeroline: false },
     margin: { l: 60, r: 20, t: 40, b: 50 },
     paper_bgcolor: 'white', plot_bgcolor: 'white',
     font: { family: 'Segoe UI, system-ui, sans-serif', size: 11 },
@@ -500,7 +592,7 @@ function updateAll() {
     hovermode: 'x unified',
     annotations: [{
       x: pkF, y: pkS, xref: 'x', yref: 'y',
-      text: 'S<sub>peak</sub> = ' + pkS.toFixed(2) + ' m²/Hz @ ' + pkF.toFixed(3) + ' Hz',
+      text: 'S<sub>peak</sub> = ' + pkS.toFixed(2) + ' m\u00B2/Hz @ ' + pkF.toFixed(3) + ' Hz',
       showarrow: true, arrowhead: 2, arrowcolor: '#bc1c1c', arrowsize: 1,
       ax: pkF > (xRange[0] + xRange[1]) / 2 ? -60 : 60, ay: -40,
       font: { size: 10, color: '#bc1c1c' }
@@ -511,15 +603,19 @@ function updateAll() {
   updateSensitivity(type);
 }
 
-function sweepParam(sweepFn, label, unit, nSamples, sensTitle) {
+function getPlotRangeFromResult(res) {
+  const pkIdx = peakIndex(res.S);
+  const pkF = res.f[pkIdx], pkS = res.S[pkIdx];
+  return { xLo: Math.max(0, pkF * 0.12), xHi: Math.min(3.0, pkF * 5.0), yHi: pkS * 1.3 + 0.05, pkF, pkS };
+}
+
+function sweepParam(sweepFn, label, nSamples, plotId) {
   const data = sweepFn(nSamples);
-  const base = data.length > 0 ? data[0].y : 0;
-  data.forEach(d => d.pct = base > 0 ? ((d.y / base) - 1) * 100 : 0);
-  Plotly.react('sensPlot' + sensTitle, [{
+  Plotly.react('sensPlot' + plotId, [{
     x: data.map(d => d.x), y: data.map(d => d.y),
     type: 'scatter', mode: 'lines+markers',
     line: { color: '#0f3460', width: 2 }, marker: { size: 4 },
-    hovertemplate: label + '=%{x}<br>S<sub>peak</sub>=%{y:.2f} m²/Hz<extra></extra>'
+    hovertemplate: label + '=%{x}<br>S<sub>peak</sub>=%{y:.2f} m\u00B2/Hz<extra></extra>'
   }], {
     margin: { l: 40, r: 8, t: 4, b: 36 }, paper_bgcolor: 'white', plot_bgcolor: 'white',
     font: { size: 10 },
@@ -527,26 +623,25 @@ function sweepParam(sweepFn, label, unit, nSamples, sensTitle) {
     yaxis: { gridcolor: '#e8ecf0', zeroline: false, automargin: true, title: 'S<sub>peak</sub>', rangemode: 'nonnegative' },
     hovermode: 'x'
   }, { responsive: true, displayModeBar: false });
-
-  const tbody = document.getElementById('tblSens' + sensTitle);
-  let html = '<tr><th>' + label + '</th><th>S<sub>peak</sub></th><th>% change</th></tr>';
-  for (const d of data) {
-    const xf = d.x >= 100 ? 0 : d.x >= 10 ? 1 : d.x === Math.floor(d.x) ? 0 : 1;
-    html += '<tr><td>' + d.x.toFixed(xf) + ' ' + unit +
-            '</td><td>' + d.y.toFixed(2) + '</td><td>' + (d.pct > 0 ? '+' : '') + d.pct.toFixed(1) + '%</td></tr>';
-  }
-  tbody.innerHTML = html;
   return data;
+}
+
+function clearSensPanel(plotId, msg) {
+  Plotly.react('sensPlot' + plotId, [{
+    x: [], y: [], type: 'scatter', mode: 'text',
+    text: [msg], textposition: 'middle center',
+    textfont: { color: '#8a9aaa', size: 11 }
+  }], {
+    margin: { l: 8, r: 8, t: 8, b: 8 }, paper_bgcolor: 'white', plot_bgcolor: 'white',
+    xaxis: { visible: false, range: [0, 1] }, yaxis: { visible: false, range: [0, 1] }
+  }, { responsive: true, displayModeBar: false });
 }
 
 function updateSensitivity(type) {
   function makeFn(factory) {
     return function(n) {
       const res = [];
-      for (let i = 0; i < n; i++) {
-        const t = i / (n - 1);
-        res.push(factory(t));
-      }
+      for (let i = 0; i < n; i++) { const t = i / (n - 1); res.push(factory(t)); }
       return res;
     };
   }
@@ -555,37 +650,30 @@ function updateSensitivity(type) {
     const Hm0 = parseFloat(document.getElementById('hm0Slider').value);
     const Tp = parseFloat(document.getElementById('tpSlider').value);
     const gamma = parseFloat(document.getElementById('gammaSlider').value);
-    document.getElementById('sensTitle0').textContent = '\u03B3 (Peakedness) Sensitivity';
-    document.getElementById('sensTitle1').textContent = 'H\u2098\u2080 Sensitivity';
-    document.getElementById('sensTitle2').textContent = 'T\u209A Sensitivity';
-    sweepParam(makeFn(t => {
-      const g = 1 + t * 49;
-      const s = computeJonswap(Hm0, Tp, g); return { x: g, y: s.S[peakIndex(s.S)] };
-    }), '\u03B3', '', 25, 0);
-    sweepParam(makeFn(t => {
-      const h = 0.5 + t * 11.5;
-      const s = computeJonswap(h, Tp, gamma); return { x: h, y: s.S[peakIndex(s.S)] };
-    }), 'H\u2098\u2080 (m)', 'm', 25, 1);
-    sweepParam(makeFn(t => {
-      const tp = 3 + t * 22;
-      const s = computeJonswap(Hm0, tp, gamma); return { x: tp, y: s.S[peakIndex(s.S)] };
-    }), 'T\u209A (s)', 's', 25, 2);
-  } else if (type === 'bretschneider') {
-    const Hm0 = parseFloat(document.getElementById('bHm0Slider').value);
-    const Tp = parseFloat(document.getElementById('bTpSlider').value);
-    document.getElementById('sensTitle0').textContent = 'H\u2098\u2080 Sensitivity';
-    document.getElementById('sensTitle1').textContent = 'T\u209A Sensitivity';
-    document.getElementById('sensTitle2').textContent = '\u03B3 not varied (fixed at 1)';
-    sweepParam(makeFn(t => {
-      const h = 0.5 + t * 11.5;
-      const s = computeBretschneider(h, Tp); return { x: h, y: s.S[peakIndex(s.S)] };
-    }), 'H\u2098\u2080 (m)', 'm', 25, 0);
-    sweepParam(makeFn(t => {
-      const tp = 3 + t * 22;
-      const s = computeBretschneider(Hm0, tp); return { x: tp, y: s.S[peakIndex(s.S)] };
-    }), 'T\u209A (s)', 's', 25, 1);
-    Plotly.react('sensPlot2', [], {}, { responsive: true, displayModeBar: false });
-    document.getElementById('tblSens2').innerHTML = '<tr><th colspan="3">Not applicable (PM shape)</th></tr>';
+    document.getElementById('sensTitle0').textContent = '\u03B3 (Peakedness)';
+    document.getElementById('sensTitle1').textContent = 'H\u209B (Wave Height)';
+    document.getElementById('sensTitle2').textContent = 'T\u209A (Peak Period)';
+    sweepParam(makeFn(t => { const g = 1 + t * 9; const s = computeJonswap(Hm0, Tp, g); return { x: g, y: s.S[peakIndex(s.S)] }; }), '\u03B3', 25, 0);
+    sweepParam(makeFn(t => { const h = 0.5 + t * 11.5; const s = computeJonswap(h, Tp, gamma); return { x: h, y: s.S[peakIndex(s.S)] }; }), 'H\u209B (m)', 25, 1);
+    sweepParam(makeFn(t => { const tp = 3 + t * 22; const s = computeJonswap(Hm0, tp, gamma); return { x: tp, y: s.S[peakIndex(s.S)] }; }), 'T\u209A (s)', 25, 2);
+  } else if (type === 'pm-generalized') {
+    const Hm0 = parseFloat(document.getElementById('gHm0Slider').value);
+    const Tp = parseFloat(document.getElementById('gTpSlider').value);
+    document.getElementById('sensTitle0').textContent = 'H\u209B (Wave Height)';
+    document.getElementById('sensTitle1').textContent = 'T\u209A (Peak Period)';
+    document.getElementById('sensTitle2').textContent = 'γ fixed at 1';
+    sweepParam(makeFn(t => { const h = 0.5 + t * 11.5; const s = computePMGeneralized(h, Tp); return { x: h, y: s.S[peakIndex(s.S)] }; }), 'H\u209B (m)', 25, 0);
+    sweepParam(makeFn(t => { const tp = 3 + t * 22; const s = computePMGeneralized(Hm0, tp); return { x: tp, y: s.S[peakIndex(s.S)] }; }), 'T\u209A (s)', 25, 1);
+    clearSensPanel(2, 'Not applicable (PM shape)');
+  } else if (type === 'pm-ittc') {
+    const Hs = parseFloat(document.getElementById('iHsSlider').value);
+    const Tz = parseFloat(document.getElementById('iTzSlider').value);
+    document.getElementById('sensTitle0').textContent = 'H\u209B (Wave Height)';
+    document.getElementById('sensTitle1').textContent = 'T\u2092 (Zero-Crossing)';
+    document.getElementById('sensTitle2').textContent = 'γ fixed (PM shape)';
+    sweepParam(makeFn(t => { const h = 0.5 + t * 11.5; const s = computePM_ITTC(h, Tz); return { x: h, y: s.S[peakIndex(s.S)] }; }), 'H\u209B (m)', 25, 0);
+    sweepParam(makeFn(t => { const tz = 2 + t * 18; const s = computePM_ITTC(Hs, tz); return { x: tz, y: s.S[peakIndex(s.S)] }; }), 'T\u2092 (s)', 25, 1);
+    clearSensPanel(2, 'Fixed PM spectral shape');
   } else if (type === 'ochi-hubble') {
     const osH = parseFloat(document.getElementById('osHm0Slider').value);
     const osT = parseFloat(document.getElementById('osTpSlider').value);
@@ -593,43 +681,40 @@ function updateSensitivity(type) {
     const owH = parseFloat(document.getElementById('owHm0Slider').value);
     const owT = parseFloat(document.getElementById('owTpSlider').value);
     const owG = parseFloat(document.getElementById('owGammaSlider').value);
-    document.getElementById('sensTitle0').textContent = 'T\u209A Swell Sensitivity';
-    document.getElementById('sensTitle1').textContent = 'T\u209A Sea Sensitivity';
-    document.getElementById('sensTitle2').textContent = 'Total H\u2098\u2080 Sensitivity';
-    sweepParam(makeFn(t => {
-      const tp = 5 + t * 20;
-      const s = computeOchiHubble(osH, tp, osG, owH, owT, owG); return { x: tp, y: s.S[peakIndex(s.S)] };
-    }), 'T\u209A_swell (s)', 's', 20, 0);
-    sweepParam(makeFn(t => {
-      const tp = 3 + t * 12;
-      const s = computeOchiHubble(osH, osT, osG, owH, tp, owG); return { x: tp, y: s.S[peakIndex(s.S)] };
-    }), 'T\u209A_sea (s)', 's', 20, 1);
-    sweepParam(makeFn(t => {
-      const totalH = 0.2 + t * 11;
-      const ratio = owH / Math.max(osH + owH, 0.01);
-      const hS = Math.sqrt((1 - ratio) * totalH * totalH);
-      const hW = Math.sqrt(ratio * totalH * totalH);
-      const s = computeOchiHubble(hS, osT, osG, hW, owT, owG); return { x: totalH, y: s.S[peakIndex(s.S)] };
-    }), 'H\u2098\u2080_tot (m)', 'm', 20, 2);
+    document.getElementById('sensTitle0').textContent = 'T\u209A Swell';
+    document.getElementById('sensTitle1').textContent = 'T\u209A Sea';
+    document.getElementById('sensTitle2').textContent = 'Total H\u209B';
+    sweepParam(makeFn(t => { const tp = 5 + t * 20; const s = computeOchiHubble(osH, tp, osG, owH, owT, owG); return { x: tp, y: s.S[peakIndex(s.S)] }; }), 'T\u209A_swell (s)', 20, 0);
+    sweepParam(makeFn(t => { const tp = 3 + t * 12; const s = computeOchiHubble(osH, osT, osG, owH, tp, owG); return { x: tp, y: s.S[peakIndex(s.S)] }; }), 'T\u209A_sea (s)', 20, 1);
+    sweepParam(makeFn(t => { const tot = 0.2 + t * 11; const ratio = owH / Math.max(osH + owH, 0.01); const hS = Math.sqrt((1 - ratio) * tot * tot); const hW = Math.sqrt(ratio * tot * tot); const s = computeOchiHubble(hS, osT, osG, hW, owT, owG); return { x: tot, y: s.S[peakIndex(s.S)] }; }), 'H\u209B_tot (m)', 20, 2);
   } else if (type === 'tma') {
     const Hm0 = parseFloat(document.getElementById('tHm0Slider').value);
     const Tp = parseFloat(document.getElementById('tTpSlider').value);
     const gamma = parseFloat(document.getElementById('tGammaSlider').value);
-    document.getElementById('sensTitle0').textContent = '\u03B3 Sensitivity';
-    document.getElementById('sensTitle1').textContent = 'Depth Sensitivity';
-    document.getElementById('sensTitle2').textContent = 'H\u2098\u2080 Sensitivity';
-    sweepParam(makeFn(t => {
-      const g = 1 + t * 49;
-      const s = computeTMA(Hm0, Tp, g, parseFloat(document.getElementById('depthSlider').value)); return { x: g, y: s.S[peakIndex(s.S)] };
-    }), '\u03B3', '', 25, 0);
-    sweepParam(makeFn(t => {
-      const d = 5 + t * 195;
-      const s = computeTMA(Hm0, Tp, gamma, d); return { x: d, y: s.S[peakIndex(s.S)] };
-    }), 'Depth (m)', 'm', 25, 1);
-    sweepParam(makeFn(t => {
-      const h = 0.5 + t * 11.5;
-      const s = computeTMA(h, Tp, gamma, parseFloat(document.getElementById('depthSlider').value)); return { x: h, y: s.S[peakIndex(s.S)] };
-    }), 'H\u2098\u2080 (m)', 'm', 25, 2);
+    const depth = parseFloat(document.getElementById('depthSlider').value);
+    document.getElementById('sensTitle0').textContent = '\u03B3 (Peakedness)';
+    document.getElementById('sensTitle1').textContent = 'Depth';
+    document.getElementById('sensTitle2').textContent = 'H\u209B (Wave Height)';
+    sweepParam(makeFn(t => { const g = 1 + t * 49; const s = computeTMA(Hm0, Tp, g, depth); return { x: g, y: s.S[peakIndex(s.S)] }; }), '\u03B3', 25, 0);
+    sweepParam(makeFn(t => { const d = 5 + t * 195; const s = computeTMA(Hm0, Tp, gamma, d); return { x: d, y: s.S[peakIndex(s.S)] }; }), 'Depth (m)', 25, 1);
+    sweepParam(makeFn(t => { const h = 0.5 + t * 11.5; const s = computeTMA(h, Tp, gamma, depth); return { x: h, y: s.S[peakIndex(s.S)] }; }), 'H\u209B (m)', 25, 2);
+  } else if (type === 'white-noise') {
+    const Hs = parseFloat(document.getElementById('wHsSlider').value);
+    document.getElementById('sensTitle0').textContent = 'H\u209B (Wave Height)';
+    document.getElementById('sensTitle1').textContent = 'No spectral shape';
+    document.getElementById('sensTitle2').textContent = 'Flat spectrum';
+    sweepParam(makeFn(t => { const h = 0.5 + t * 11.5; const s = computeWhiteNoise(h); return { x: h, y: s.S[peakIndex(s.S)] }; }), 'H\u209B (m)', 25, 0);
+    clearSensPanel(1, 'Uniform energy density');
+    clearSensPanel(2, 'No peak — white noise');
+  } else if (type === 'regular-wave') {
+    const H = parseFloat(document.getElementById('rHSlider').value);
+    const T = parseFloat(document.getElementById('rTSlider').value);
+    document.getElementById('sensTitle0').textContent = 'Wave Height H';
+    document.getElementById('sensTitle1').textContent = 'Wave Period T';
+    document.getElementById('sensTitle2').textContent = 'Monochromatic';
+    sweepParam(makeFn(t => { const h = 0.1 + t * 9.9; const s = computeRegularWave(h, T); return { x: h, y: s.S[peakIndex(s.S)] }; }), 'H (m)', 25, 0);
+    sweepParam(makeFn(t => { const tp = 3 + t * 22; const s = computeRegularWave(H, tp); return { x: tp, y: s.S[peakIndex(s.S)] }; }), 'T (s)', 25, 1);
+    clearSensPanel(2, 'Single-frequency wave');
   }
 }
 
@@ -644,24 +729,35 @@ function generateReport() {
   const Tz = mom.m2 > 0 ? Math.sqrt(mom.m0 / mom.m2) : 0;
   const eps = mom.m0 > 0 && mom.m2 > 0 ? Math.sqrt(Math.max(0, 1 - mom.m1 * mom.m1 / (mom.m0 * mom.m2))) : 0;
 
+  function gHs(v) { return v.toFixed(1) + ' m'; }
+  function gT(v) { return v.toFixed(1) + ' s'; }
+
   let html = '';
   html += '<h3>1. Input Parameters</h3>';
   html += '<table><tr><th>Parameter</th><th>Value</th><th>Description</th></tr>';
+
   if (type === 'jonswap') {
     const Hm0 = parseFloat(document.getElementById('hm0Slider').value);
     const Tp = parseFloat(document.getElementById('tpSlider').value);
     const gamma = parseFloat(document.getElementById('gammaSlider').value);
     html += '<tr><td>Model</td><td>JONSWAP</td><td>Deep-water developing sea</td></tr>';
-    html += '<tr><td>H<sub>m0</sub></td><td>' + Hm0.toFixed(1) + ' m</td><td>Significant wave height</td></tr>';
-    html += '<tr><td>T<sub>p</sub></td><td>' + Tp.toFixed(1) + ' s</td><td>Peak spectral period</td></tr>';
+    html += '<tr><td>H<sub>s</sub></td><td>' + gHs(Hm0) + '</td><td>Significant wave height</td></tr>';
+    html += '<tr><td>T<sub>p</sub></td><td>' + gT(Tp) + '</td><td>Peak spectral period</td></tr>';
     html += '<tr><td>\u03B3</td><td>' + gamma.toFixed(2) + '</td><td>Peakedness parameter</td></tr>';
-  } else if (type === 'bretschneider') {
-    const Hm0 = parseFloat(document.getElementById('bHm0Slider').value);
-    const Tp = parseFloat(document.getElementById('bTpSlider').value);
-    html += '<tr><td>Model</td><td>Bretschneider</td><td>Two-parameter (PM generalised)</td></tr>';
-    html += '<tr><td>H<sub>m0</sub></td><td>' + Hm0.toFixed(1) + ' m</td><td>Significant wave height</td></tr>';
-    html += '<tr><td>T<sub>p</sub></td><td>' + Tp.toFixed(1) + ' s</td><td>Peak spectral period</td></tr>';
-    html += '<tr><td>\u03B3</td><td>1 (fixed)</td><td>Pierson\u2013Moskowitz shape</td></tr>';
+  } else if (type === 'pm-generalized') {
+    const Hm0 = parseFloat(document.getElementById('gHm0Slider').value);
+    const Tp = parseFloat(document.getElementById('gTpSlider').value);
+    html += '<tr><td>Model</td><td>PM Generalized</td><td>Two-parameter Pierson\u2013Moskowitz</td></tr>';
+    html += '<tr><td>H<sub>s</sub></td><td>' + gHs(Hm0) + '</td><td>Significant wave height</td></tr>';
+    html += '<tr><td>T<sub>p</sub></td><td>' + gT(Tp) + '</td><td>Peak spectral period</td></tr>';
+    html += '<tr><td>\u03B3</td><td>1 (fixed)</td><td>PM shape (no peak enhancement)</td></tr>';
+  } else if (type === 'pm-ittc') {
+    const Hs = parseFloat(document.getElementById('iHsSlider').value);
+    const Tz = parseFloat(document.getElementById('iTzSlider').value);
+    html += '<tr><td>Model</td><td>PM ITTC</td><td>ITTC formulation with zero-crossing period</td></tr>';
+    html += '<tr><td>H<sub>s</sub></td><td>' + gHs(Hs) + '</td><td>Significant wave height</td></tr>';
+    html += '<tr><td>T<sub>z</sub></td><td>' + gT(Tz) + '</td><td>Zero-crossing period</td></tr>';
+    html += '<tr><td>T<sub>p</sub> (approx)</td><td>' + gT(1.408 * Tz) + '</td><td>1.408 \u00D7 T<sub>z</sub></td></tr>';
   } else if (type === 'ochi-hubble') {
     const osH = parseFloat(document.getElementById('osHm0Slider').value);
     const osT = parseFloat(document.getElementById('osTpSlider').value);
@@ -671,23 +767,34 @@ function generateReport() {
     const owG = parseFloat(document.getElementById('owGammaSlider').value);
     const totalHm0 = Math.sqrt(osH * osH + owH * owH);
     html += '<tr><td>Model</td><td>Ochi-Hubble (bimodal)</td><td>Two-component swell+sea</td></tr>';
-    html += '<tr><td>H<sub>m0</sub> swell</td><td>' + osH.toFixed(2) + ' m</td><td>Swell component height</td></tr>';
-    html += '<tr><td>T<sub>p</sub> swell</td><td>' + osT.toFixed(1) + ' s</td><td>Swell peak period</td></tr>';
+    html += '<tr><td>H<sub>s</sub> swell</td><td>' + osH.toFixed(2) + ' m</td><td>Swell component height</td></tr>';
+    html += '<tr><td>T<sub>p</sub> swell</td><td>' + gT(osT) + '</td><td>Swell peak period</td></tr>';
     html += '<tr><td>\u03B3 swell</td><td>' + osG.toFixed(1) + '</td><td>Swell peakedness</td></tr>';
-    html += '<tr><td>H<sub>m0</sub> sea</td><td>' + owH.toFixed(2) + ' m</td><td>Wind-sea component height</td></tr>';
-    html += '<tr><td>T<sub>p</sub> sea</td><td>' + owT.toFixed(1) + ' s</td><td>Wind-sea peak period</td></tr>';
+    html += '<tr><td>H<sub>s</sub> sea</td><td>' + owH.toFixed(2) + ' m</td><td>Wind-sea component height</td></tr>';
+    html += '<tr><td>T<sub>p</sub> sea</td><td>' + gT(owT) + '</td><td>Wind-sea peak period</td></tr>';
     html += '<tr><td>\u03B3 sea</td><td>' + owG.toFixed(1) + '</td><td>Wind-sea peakedness</td></tr>';
-    html += '<tr><td>H<sub>m0</sub> total</td><td>' + totalHm0.toFixed(2) + ' m</td><td>\u221A(H<sub>swell</sub>\u00B2 + H<sub>sea</sub>\u00B2)</td></tr>';
+    html += '<tr><td>H<sub>s</sub> total</td><td>' + totalHm0.toFixed(2) + ' m</td><td>\u221A(H<sub>swell</sub>\u00B2 + H<sub>sea</sub>\u00B2)</td></tr>';
   } else if (type === 'tma') {
     const Hm0 = parseFloat(document.getElementById('tHm0Slider').value);
     const Tp = parseFloat(document.getElementById('tTpSlider').value);
     const gamma = parseFloat(document.getElementById('tGammaSlider').value);
     const depth = parseFloat(document.getElementById('depthSlider').value);
     html += '<tr><td>Model</td><td>TMA</td><td>Shallow-water JONSWAP</td></tr>';
-    html += '<tr><td>H<sub>m0</sub></td><td>' + Hm0.toFixed(1) + ' m</td><td>Significant wave height</td></tr>';
-    html += '<tr><td>T<sub>p</sub></td><td>' + Tp.toFixed(1) + ' s</td><td>Peak spectral period</td></tr>';
+    html += '<tr><td>H<sub>s</sub></td><td>' + gHs(Hm0) + '</td><td>Significant wave height</td></tr>';
+    html += '<tr><td>T<sub>p</sub></td><td>' + gT(Tp) + '</td><td>Peak spectral period</td></tr>';
     html += '<tr><td>\u03B3</td><td>' + gamma.toFixed(2) + '</td><td>Peakedness parameter</td></tr>';
     html += '<tr><td>Depth</td><td>' + depth.toFixed(0) + ' m</td><td>Water depth</td></tr>';
+  } else if (type === 'white-noise') {
+    const Hs = parseFloat(document.getElementById('wHsSlider').value);
+    html += '<tr><td>Model</td><td>White Noise</td><td>Flat spectral density</td></tr>';
+    html += '<tr><td>H<sub>s</sub></td><td>' + gHs(Hs) + '</td><td>Significant wave height</td></tr>';
+    html += '<tr><td>Band</td><td>0.01 \u2013 1.0 Hz</td><td>Uniform energy distribution</td></tr>';
+  } else if (type === 'regular-wave') {
+    const H = parseFloat(document.getElementById('rHSlider').value);
+    const T = parseFloat(document.getElementById('rTSlider').value);
+    html += '<tr><td>Model</td><td>Regular Wave</td><td>Monochromatic (narrow Gaussian spike)</td></tr>';
+    html += '<tr><td>H</td><td>' + H.toFixed(1) + ' m</td><td>Wave height (trough to crest)</td></tr>';
+    html += '<tr><td>T</td><td>' + gT(T) + '</td><td>Wave period</td></tr>';
   }
 
   html += '<h3>2. Spectral Parameters</h3>';
@@ -695,7 +802,7 @@ function generateReport() {
   html += '<tr><td>f<sub>peak</sub></td><td>' + pkF.toFixed(3) + ' Hz</td><td>Frequency of max S(f)</td></tr>';
   html += '<tr><td>S<sub>peak</sub></td><td>' + pkS.toFixed(2) + ' m\u00B2/Hz</td><td>Peak spectral density</td></tr>';
   html += '<tr><td>m<sub>0</sub></td><td>' + mom.m0.toFixed(4) + ' m\u00B2</td><td>\u222B S df (total energy)</td></tr>';
-  html += '<tr><td>H<sub>m0</sub> check</td><td>' + Hm0Check.toFixed(3) + ' m</td><td>4\u221Am\u2080</td></tr>';
+  html += '<tr><td>H<sub>s</sub> check</td><td>' + Hm0Check.toFixed(3) + ' m</td><td>4\u221Am\u2080</td></tr>';
   html += '<tr><td>T<sub>e</sub></td><td>' + Te.toFixed(2) + ' s</td><td>m\u208B\u2081 / m\u2080 (energy period)</td></tr>';
   html += '<tr><td>T<sub>z</sub></td><td>' + Tz.toFixed(2) + ' s</td><td>\u221A(m\u2080 / m\u2082) (zero-crossing)</td></tr>';
   html += '<tr><td>\u03B5</td><td>' + eps.toFixed(3) + '</td><td>Spectral width (0\u20131)</td></tr>';
@@ -705,76 +812,40 @@ function generateReport() {
     const fp = 1 / parseFloat(document.getElementById('tTpSlider').value);
     const kp = dispRel(depth, 2 * Math.PI * fp);
     const kpd = kp * depth;
-    html += '<tr><td>k<sub>p</sub>d</td><td>' + kpd.toFixed(2) + '</td><td>Non-dimensional water depth at peak</td></tr>';
+    html += '<tr><td>k<sub>p</sub>d</td><td>' + kpd.toFixed(2) + '</td><td>Non-dimensional depth at peak</td></tr>';
     html += '<tr><td>Regime</td><td>' + (kpd > Math.PI ? 'Deep' : kpd > 0.5 * Math.PI ? 'Intermediate' : 'Shallow') + '</td><td>Wave regime at peak frequency</td></tr>';
   }
-
   if (type === 'ochi-hubble') {
     const osH = parseFloat(document.getElementById('osHm0Slider').value);
     const owH = parseFloat(document.getElementById('owHm0Slider').value);
-    const totalHm0 = Math.sqrt(osH * osH + owH * owH);
-    const swellFrac = osH * osH / (totalHm0 * totalHm0);
-    html += '<tr><td>Swell energy fraction</td><td>' + (swellFrac * 100).toFixed(1) + '%</td><td>Proportion of energy in swell</td></tr>';
+    const t = Math.sqrt(osH * osH + owH * owH);
+    html += '<tr><td>Swell fraction</td><td>' + (osH * osH / (t * t) * 100).toFixed(1) + '%</td><td>Energy in swell component</td></tr>';
+  }
+  if (type === 'white-noise') {
+    html += '<tr><td>S(f) value</td><td>' + res.S[0].toFixed(4) + ' m\u00B2/Hz</td><td>Constant spectral density</td></tr>';
   }
 
   html += '</table>';
 
-  html += '<h3>3. Sensitivity Analysis</h3>';
+  html += '<h3>3. Engineering Summary</h3>';
   html += '<div class="highlight">';
+  html += '<strong>Model:</strong> ' + type.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) + '<br><br>';
 
   if (type === 'jonswap') {
-    const Hm0 = parseFloat(document.getElementById('hm0Slider').value);
-    const Tp = parseFloat(document.getElementById('tpSlider').value);
     const gamma = parseFloat(document.getElementById('gammaSlider').value);
-    const g1 = computeJonswap(Hm0, Tp, 1).S[peakIndex(computeJonswap(Hm0, Tp, 1).S)];
-    const gCur = computeJonswap(Hm0, Tp, gamma).S[peakIndex(computeJonswap(Hm0, Tp, gamma).S)];
-    const g50 = computeJonswap(Hm0, Tp, 50).S[peakIndex(computeJonswap(Hm0, Tp, 50).S)];
-    html += '<strong>\u03B3 sensitivity:</strong> S<sub>peak</sub> increases by ' + ((gCur / g1 - 1) * 100).toFixed(0) + '% from \u03B3=1 to \u03B3=' + gamma.toFixed(1) + ', and by ' + ((g50 / g1 - 1) * 100).toFixed(0) + '% to \u03B3=50. The effect is nonlinear with saturation at high \u03B3.<br>';
-    html += '<strong>H<sub>m0</sub> sensitivity:</strong> S<sub>peak</sub> \u221D H<sub>m0</sub>\u00B2 (quadratic scaling of total energy).<br>';
-    html += '<strong>T<sub>p</sub> sensitivity:</strong> S<sub>peak</sub> \u221D T<sub>p</sub>\u2074\u2013T<sub>p</sub>\u2075 — the strongest lever. A T<sub>p</sub> shift from ' + Tp.toFixed(1) + ' s to ' + (Tp * 1.5).toFixed(1) + ' s changes S<sub>peak</sub> by approximately ' + Math.round(Math.pow(1.5, 4.5) * 100 - 100) + '%.';
-  } else if (type === 'bretschneider') {
-    html += 'The Bretschneider spectrum has only two degrees of freedom (H<sub>m0</sub>, T<sub>p</sub>). \u03B3 is fixed at 1 (Pierson\u2013Moskowitz shape).<br>';
-    html += '<strong>H<sub>m0</sub> sensitivity:</strong> S<sub>peak</sub> \u221D H<sub>m0</sub>\u00B2 (quadratic).<br>';
-    html += '<strong>T<sub>p</sub> sensitivity:</strong> S<sub>peak</sub> \u221D T<sub>p</sub>\u2074\u2013T<sub>p</sub>\u2075 — the dominant parameter for structural loads.';
+    html += '\u03B3 = ' + gamma.toFixed(2) + ' — peakedness controls the concentration of energy near the peak frequency. Higher \u03B3 increases resonant response in offshore structures. T<sub>p</sub> determines which structural modes are excited; H<sub>s</sub> scales total energy quadratically.';
+  } else if (type === 'pm-generalized') {
+    html += 'The PM generalized spectrum is the broadest realistic sea spectrum (\u03B3=1). It is conservative for preliminary design — resonant response estimates will be lower than for JONSWAP or swell spectra. Suitable when little is known about the local wave climate.';
+  } else if (type === 'pm-ittc') {
+    html += 'The ITTC formulation using T<sub>z</sub> is common in naval architecture and ship design. T<sub>z</sub> is more readily available from wave records than T<sub>p</sub>. The implied T<sub>p</sub> = 1.408\u00D7T<sub>z</sub> relationship is fixed.';
   } else if (type === 'ochi-hubble') {
-    const osH = parseFloat(document.getElementById('osHm0Slider').value);
-    const osT = parseFloat(document.getElementById('osTpSlider').value);
-    const osG = parseFloat(document.getElementById('osGammaSlider').value);
-    const owH = parseFloat(document.getElementById('owHm0Slider').value);
-    const owT = parseFloat(document.getElementById('owTpSlider').value);
-    const owG = parseFloat(document.getElementById('owGammaSlider').value);
-    const totalHm0 = Math.sqrt(osH * osH + owH * owH);
-    html += '<strong>Bimodal structure:</strong> The sea state has ' + (osH * osH / (totalHm0 * totalHm0) * 100).toFixed(0) + '% of total energy in the swell component and ' + ((1 - osH * osH / (totalHm0 * totalHm0)) * 100).toFixed(0) + '% in the wind-sea component.<br>';
-    html += '<strong>T<sub>p</sub> separation:</strong> Swell: ' + osT.toFixed(1) + ' s, Sea: ' + owT.toFixed(1) + ' s (\u0394T<sub>p</sub> = ' + (osT - owT).toFixed(1) + ' s). The spectral peak may be dominated by one component depending on energy partition.<br>';
-    html += '<strong>Structural implication:</strong> Bimodal spectra can excite two distinct structural modes. If a structural eigenfrequency aligns with either T<sub>p</sub>, resonant amplification may occur at two separate periods.';
+    html += 'Bimodal seas can excite two distinct structural resonances. Fatigue assessment should account for the combined energy distribution. The swell component often carries energy at periods longer than the first structural mode, while the wind-sea component may excite higher modes.';
   } else if (type === 'tma') {
-    const depth = parseFloat(document.getElementById('depthSlider').value);
-    const Hm0 = parseFloat(document.getElementById('tHm0Slider').value);
-    const Tp = parseFloat(document.getElementById('tTpSlider').value);
-    const gamma = parseFloat(document.getElementById('tGammaSlider').value);
-    const eqDeep = computeJonswap(Hm0, Tp, gamma);
-    const shoal = computeTMA(Hm0, Tp, gamma, depth);
-    const sDeep = eqDeep.S[peakIndex(eqDeep.S)];
-    const sShoal = shoal.S[peakIndex(shoal.S)];
-    html += '<strong>Depth effect:</strong> Water depth d = ' + depth.toFixed(0) + ' m. The shallow-water TMA depth factor suppresses the high-frequency tail relative to the deep-water JONSWAP equivalent.<br>';
-    html += '<strong>S<sub>peak</sub> change:</strong> Compared to the equivalent deep-water spectrum, the TMA peak is ' + ((sShoal / sDeep - 1) * 100).toFixed(1) + '% different at this depth.<br>';
-    html += '<strong>Coastal implication:</strong> In shallow water (d < \u03BB/2) the spectral shape changes significantly, affecting sediment transport and nearshore structural loads.';
-  }
-
-  html += '</div>';
-
-  html += '<h3>4. Engineering Summary for Offshore Structural Loads</h3>';
-  html += '<div class="highlight">';
-  html += 'The peak spectral density S<sub>peak</sub> is the key parameter for frequency-domain structural response analysis. It directly multiplies the squared transfer function in the computation of response spectra.<br><br>';
-
-  if (type === 'jonswap') {
-    html += 'For JONSWAP spectra, \u03B3 controls the concentration of energy near the peak and is critical for fatigue damage of resonant structural modes. T<sub>p</sub> determines which structural modes are excited and is the most influential parameter for both fatigue and extreme response. H<sub>m0</sub> scales the total energy and affects all load types proportionally to the square of wave height.';
-  } else if (type === 'bretschneider') {
-    html += 'The Bretschneider spectrum is conservative (broad-banded relative to JONSWAP or TMA), making it suitable for preliminary design where spectral peakedness is uncertain. The absence of a \u03B3 parameter means the spectrum width is fixed, which may underestimate resonant response for swell-dominated conditions.';
-  } else if (type === 'ochi-hubble') {
-    html += 'Bimodal seas require careful analysis as the two spectral peaks can excite distinct structural resonances. Fatigue damage calculations must account for the combined energy distribution. If structural eigenfrequencies lie between the two peaks, a single-peak spectrum may underpredict or overpredict response. A bimodal model is recommended whenever swell and wind-sea coexist.';
-  } else if (type === 'tma') {
-    html += 'In coastal and shallow-water environments, the TMA spectrum is essential. Depth-induced spectral reshaping reduces the high-frequency energy and slightly shifts the peak. This affects fatigue calculations for offshore wind turbine foundations, coastal structures, and pipelines. The shallow-water modification reduces the high-frequency tail, which can decrease fatigue damage rates relative to deep-water predictions.';
+    html += 'In finite depth, the high-frequency tail is suppressed by the TMA depth factor. This reduces spectral density at frequencies above the peak, decreasing fatigue damage rates for structures with high natural frequencies (e.g., wind turbine blades, deck equipment).';
+  } else if (type === 'white-noise') {
+    html += 'White noise distributes energy uniformly across the frequency band. It is a theoretical construct useful for: (a) transfer function identification, (b) benchmarking response models, (c) conservative broadband excitation in fatigue screening. Not physically realistic for ocean waves.';
+  } else if (type === 'regular-wave') {
+    html += 'A regular (monochromatic) wave concentrates all energy at a single frequency. This is the simplest wave model, used for: (a) deterministic design wave analysis, (b) fatigue damage equivalent wave methods, (c) hydrodynamic coefficient calibration. In reality, ocean waves are random and broadband.';
   }
 
   html += '</div>';
@@ -789,7 +860,18 @@ function setupControl(id, valId, update) {
   const slider = document.getElementById(id);
   const valEl = document.getElementById(valId);
   slider.addEventListener('input', () => {
-    if (valEl) valEl.textContent = parseFloat(slider.value).toFixed(slider.step < 1 ? (slider.step < 0.1 ? 2 : 1) : 0) + (id.includes('hm0') || id.includes('Hm0') ? ' m' : id.includes('tp') || id.includes('Tp') ? ' s' : '');
+    if (valEl) {
+      const v = parseFloat(slider.value);
+      const isH = id.toLowerCase().includes('hm0') || id.toLowerCase().includes('hs') || id.match(/^osH/) || id.match(/^owH/) || (id.startsWith('r') && id.includes('H'));
+      const isT = id.toLowerCase().includes('tp') || id.toLowerCase().includes('tz') || id.includes('Tp') || id.includes('Tz') || id.includes('Tp') || id.includes('Tz') || (id.startsWith('r') && id.includes('T'));
+      const isDepth = id.includes('depth');
+      const isGamma = id.includes('Gamma');
+      if (isDepth) valEl.textContent = v.toFixed(0) + ' m';
+      else if (isGamma) valEl.textContent = v.toFixed(2);
+      else if (isH) valEl.textContent = v.toFixed(1) + ' m';
+      else if (isT) valEl.textContent = v.toFixed(1) + ' s';
+      else valEl.textContent = v.toFixed(1);
+    }
     setRangeStyle(slider, parseFloat(slider.min), parseFloat(slider.max));
     update();
   });
@@ -798,8 +880,10 @@ function setupControl(id, valId, update) {
 setupControl('hm0Slider', 'hm0Val', updateAll);
 setupControl('tpSlider', 'tpVal', updateAll);
 setupControl('gammaSlider', 'gammaVal', updateAll);
-setupControl('bHm0Slider', 'bHm0Val', updateAll);
-setupControl('bTpSlider', 'bTpVal', updateAll);
+setupControl('gHm0Slider', 'gHm0Val', updateAll);
+setupControl('gTpSlider', 'gTpVal', updateAll);
+setupControl('iHsSlider', 'iHsVal', updateAll);
+setupControl('iTzSlider', 'iTzVal', updateAll);
 setupControl('osHm0Slider', 'osHm0Val', updateAll);
 setupControl('osTpSlider', 'osTpVal', updateAll);
 setupControl('osGammaSlider', 'osGammaVal', updateAll);
@@ -813,30 +897,27 @@ setupControl('depthSlider', 'depthVal', () => {
   document.getElementById('depthVal').textContent = document.getElementById('depthSlider').value + ' m';
   setRangeStyle(document.getElementById('depthSlider'), 5, 200);
   const d = parseFloat(document.getElementById('depthSlider').value);
-  document.getElementById('depthDesc').textContent = d < 25 ? 'Very shallow — strong high-frequency suppression' : d < 60 ? 'Shallow — moderate modification' : d < 120 ? 'Intermediate depth — mild effect' : 'Deep water — near JONSWAP equivalent';
+  document.getElementById('depthDesc').textContent = d < 25 ? 'Very shallow — strong HF suppression' : d < 60 ? 'Shallow — moderate modification' : d < 120 ? 'Intermediate — mild effect' : 'Deep water — near JONSWAP';
   updateAll();
 });
+setupControl('wHsSlider', 'wHsVal', updateAll);
+setupControl('rHSlider', 'rHVal', updateAll);
+setupControl('rTSlider', 'rTVal', updateAll);
 
-// Also need to update gammaDesc for jonswap
 document.getElementById('gammaSlider').addEventListener('input', () => {
   const g = parseFloat(document.getElementById('gammaSlider').value);
   let desc = '';
   if (g < 1.5) desc = 'Near-PM spectrum — broad, low peak';
-  else if (g < 3) desc = 'Typical wind-sea — moderate peak';
-  else if (g < 5) desc = 'Mature wind-sea / young swell';
-  else if (g < 7) desc = 'Developing swell — pronounced peak';
-  else if (g < 10) desc = 'Mature swell — very sharp, narrow peak';
-  else if (g < 20) desc = 'Extremely peaked swell — energy highly concentrated';
-  else if (g < 35) desc = 'Narrow-band swell — near-sinusoidal wave field';
-  else desc = 'Extreme narrow-band — highly resonant conditions';
+  else if (g < 2.5) desc = 'Typical wind-sea — moderate peak';
+  else if (g < 4) desc = 'Mature wind-sea / young swell';
+  else if (g < 6) desc = 'Developing swell — pronounced peak';
+  else desc = 'Mature swell — very sharp, narrow peak';
   document.getElementById('gammaDesc').textContent = desc;
   updateAll();
 });
 
-// TMA gamma desc
 document.getElementById('tGammaSlider').addEventListener('input', () => updateAll());
 
-// Initialize slider styles
 document.querySelectorAll('input[type="range"]').forEach(sl => {
   setRangeStyle(sl, parseFloat(sl.min), parseFloat(sl.max));
 });

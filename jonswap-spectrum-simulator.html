@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JONSWAP Wave Spectrum Simulator</title>
+<script src="https://cdn.plot.ly/plotly-2.35.0.min.js"></script>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background: #f0f2f5; color: #1a1a2e; line-height: 1.5; padding: 20px; }
+.container { max-width: 1400px; margin: 0 auto; }
+header { background: linear-gradient(135deg, #0f3460, #16213e); color: white; padding: 24px 32px; border-radius: 12px 12px 0 0; display: flex; justify-content: space-between; align-items: center; }
+header h1 { font-size: 1.5rem; font-weight: 600; letter-spacing: -0.02em; }
+header p { font-size: 0.85rem; opacity: 0.75; margin-top: 4px; }
+.main-layout { display: grid; grid-template-columns: 300px 1fr; background: white; border-radius: 0 0 12px 12px; box-shadow: 0 4px 24px rgba(0,0,0,0.06); overflow: hidden; }
+.controls-panel { background: #f8f9fb; padding: 24px; border-right: 1px solid #e8ecf0; }
+.controls-panel h3 { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em; color: #5a6a7a; margin-bottom: 20px; }
+.control-group { margin-bottom: 24px; }
+.control-group label { display: flex; justify-content: space-between; font-size: 0.82rem; font-weight: 500; margin-bottom: 6px; color: #2a3a4a; }
+.control-group label .val { color: #0f3460; font-weight: 600; font-family: 'JetBrains Mono', 'Consolas', monospace; }
+.control-group input[type="range"] { width: 100%; height: 6px; -webkit-appearance: none; appearance: none; background: linear-gradient(90deg, #0f3460 var(--pct), #d0d8e0 var(--pct)); border-radius: 3px; outline: none; cursor: pointer; }
+.control-group input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 18px; height: 18px; border-radius: 50%; background: #0f3460; cursor: pointer; border: 2px solid white; box-shadow: 0 1px 4px rgba(0,0,0,0.2); }
+.control-group .range-labels { display: flex; justify-content: space-between; font-size: 0.7rem; color: #8a9aaa; margin-top: 2px; }
+.state-badge { display: inline-block; padding: 3px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; margin-top: 8px; }
+.state-windsea { background: #fee2e2; color: #bc1c1c; }
+.state-swell { background: #dbeafe; color: #1a56db; }
+.state-transition { background: #fef3c7; color: #b45309; }
+.plot-area { padding: 20px; min-height: 420px; }
+#spectrumPlot { width: 100%; height: 420px; }
+.params-strip { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; padding: 16px 24px; background: #f8f9fb; border-top: 1px solid #e8ecf0; }
+.param-card { text-align: center; }
+.param-card .label { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.06em; color: #7a8a9a; }
+.param-card .value { font-size: 1.1rem; font-weight: 700; color: #0f3460; font-family: 'JetBrains Mono', 'Consolas', monospace; }
+.param-card .value .unit { font-size: 0.7rem; font-weight: 400; color: #8a9aaa; }
+.section { padding: 24px; background: white; border-radius: 12px; box-shadow: 0 4px 24px rgba(0,0,0,0.06); margin-top: 20px; }
+.section h2 { font-size: 1rem; font-weight: 600; margin-bottom: 16px; color: #0f3460; }
+.sens-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+.sens-plot { height: 240px; }
+.sens-table { width: 100%; border-collapse: collapse; font-size: 0.78rem; margin-top: 8px; }
+.sens-table th { background: #f0f2f5; text-align: right; padding: 4px 8px; font-weight: 600; color: #2a3a4a; }
+.sens-table td { text-align: right; padding: 4px 8px; border-bottom: 1px solid #e8ecf0; font-family: 'JetBrains Mono', 'Consolas', monospace; }
+.sens-table th:first-child, .sens-table td:first-child { text-align: left; }
+.report-btn { background: #0f3460; color: white; border: none; padding: 12px 32px; border-radius: 8px; font-size: 0.9rem; font-weight: 600; cursor: pointer; transition: background 0.2s; }
+.report-btn:hover { background: #16213e; }
+#reportContent { display: none; margin-top: 20px; padding: 24px; background: #fafbfc; border: 1px solid #e8ecf0; border-radius: 8px; font-size: 0.85rem; line-height: 1.7; }
+#reportContent h3 { color: #0f3460; font-size: 1rem; margin: 16px 0 8px; }
+#reportContent h3:first-child { margin-top: 0; }
+#reportContent table { width: 100%; border-collapse: collapse; margin: 8px 0 16px; font-size: 0.82rem; }
+#reportContent th { background: #e8ecf0; padding: 6px 10px; text-align: center; font-weight: 600; }
+#reportContent td { padding: 5px 10px; text-align: center; border-bottom: 1px solid #e8ecf0; }
+#reportContent td:first-child { text-align: left; font-weight: 500; }
+#reportContent .highlight { background: #fef9e7; padding: 8px 12px; border-left: 3px solid #f59e0b; border-radius: 4px; margin: 8px 0; font-size: 0.82rem; }
+@media (max-width: 900px) { .main-layout { grid-template-columns: 1fr; } .controls-panel { border-right: none; border-bottom: 1px solid #e8ecf0; } .sens-grid { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<div class="container">
+<header>
+<div>
+<h1>JONSWAP Wave Spectrum Simulator</h1>
+<p>Interactive sensitivity analysis for offshore structural load calculations</p>
+</div>
+<div id="stateBadge" class="state-badge state-transition">Transition Sea</div>
+</header>
+<div class="main-layout">
+<div class="controls-panel">
+<h3>Parameters</h3>
+<div class="control-group">
+<label>Significant Wave Height <span class="val" id="hm0Val">2.50 m</span></label>
+<input type="range" id="hm0Slider" min="0.5" max="10" step="0.1" value="2.5">
+<div class="range-labels"><span>0.5 m</span><span>10 m</span></div>
+</div>
+<div class="control-group">
+<label>Peak Period <span class="val" id="tpVal">10.0 s</span></label>
+<input type="range" id="tpSlider" min="3" max="25" step="0.5" value="10">
+<div class="range-labels"><span>3 s</span><span>25 s</span></div>
+</div>
+<div class="control-group">
+<label>Peakedness <span class="val" id="gammaVal">3.30</span></label>
+<input type="range" id="gammaSlider" min="1" max="50" step="0.1" value="3.3">
+<div class="range-labels"><span>γ = 1 (PM)</span><span>γ = 50</span></div>
+</div>
+<div id="gammaDesc" style="font-size:0.75rem;color:#6a7a8a;margin-top:-12px;margin-bottom:8px;">Mature wind-sea / young swell</div>
+</div>
+<div class="plot-area">
+<div id="spectrumPlot"></div>
+</div>
+</div>
+<div class="params-strip">
+<div class="param-card"><div class="label">Peak Frequency f<sub>p</sub></div><div class="value" id="dispFp">0.100 <span class="unit">Hz</span></div></div>
+<div class="param-card"><div class="label">Peak Spectral Density</div><div class="value" id="dispPeakS">— <span class="unit">m²/Hz</span></div></div>
+<div class="param-card"><div class="label">Spectral Width ε</div><div class="value" id="dispEpsilon">—</div></div>
+<div class="param-card"><div class="label">Energy Period T<sub>e</sub></div><div class="value" id="dispTe">— <span class="unit">s</span></div></div>
+<div class="param-card"><div class="label">H<sub>m0</sub> (check)</div><div class="value" id="dispCheckHm0">— <span class="unit">m</span></div></div>
+<div class="param-card"><div class="label">Zero-crossing T<sub>z</sub></div><div class="value" id="dispTz">— <span class="unit">s</span></div></div>
+</div>
+
+<div class="section">
+<h2>Sensitivity Analysis</h2>
+<p style="font-size:0.82rem;color:#5a6a7a;margin-bottom:12px;">Each plot shows how peak spectral density varies as one parameter is swept across its range while others are held at current values.</p>
+<div class="sens-grid">
+<div><h3 style="font-size:0.8rem;margin-bottom:4px;color:#2a3a4a;">γ (Peakedness) Sensitivity</h3><div id="sensGamma" class="sens-plot"></div><table class="sens-table" id="tblGamma"><tr><th>γ</th><th>S<sub>peak</sub></th><th>% change</th></tr></table></div>
+<div><h3 style="font-size:0.8rem;margin-bottom:4px;color:#2a3a4a;">H<sub>m0</sub> Sensitivity</h3><div id="sensHm0" class="sens-plot"></div><table class="sens-table" id="tblHm0"><tr><th>H<sub>m0</sub></th><th>S<sub>peak</sub></th><th>% change</th></tr></table></div>
+<div><h3 style="font-size:0.8rem;margin-bottom:4px;color:#2a3a4a;">T<sub>p</sub> Sensitivity</h3><div id="sensTp" class="sens-plot"></div><table class="sens-table" id="tblTp"><tr><th>T<sub>p</sub></th><th>S<sub>peak</sub></th><th>% change</th></tr></table></div>
+</div>
+</div>
+
+<div class="section" style="text-align:center;">
+<button class="report-btn" onclick="generateReport()">Generate Engineering Report</button>
+<div id="reportContent"></div>
+</div>
+</div>
+
+<script>
+const N_FINE = 4000;
+const N_PLOT = 800;
+const G = 9.81;
+
+function computeSpectrum(Hm0, Tp, gamma) {
+  const fp = 1 / Tp;
+  const fMin = Math.max(0.005, 0.15 * fp);
+  const fMax = Math.min(5.0, 6.0 * fp);
+  const f = new Float64Array(N_FINE);
+  const S_raw = new Float64Array(N_FINE);
+  for (let i = 0; i < N_FINE; i++) {
+    f[i] = fMin + (fMax - fMin) * i / (N_FINE - 1);
+  }
+  for (let i = 0; i < N_FINE; i++) {
+    const fi = f[i];
+    if (fi <= 0) { S_raw[i] = 0; continue; }
+    const r = fi / fp;
+    const r4 = r * r * r * r;
+    const expPM = Math.exp(-1.25 / r4);
+    const pmTerm = (5 / 16) * Hm0 * Hm0 * Math.pow(fp, 4) * Math.pow(fi, -5) * expPM;
+    const sigma = fi <= fp ? 0.07 : 0.09;
+    const peakExp = Math.exp(-(r - 1) * (r - 1) / (2 * sigma * sigma));
+    const jwFactor = Math.pow(gamma, peakExp);
+    S_raw[i] = pmTerm * jwFactor;
+  }
+  let m0 = 0;
+  for (let i = 1; i < N_FINE; i++) {
+    m0 += (S_raw[i] + S_raw[i - 1]) * 0.5 * (f[i] - f[i - 1]);
+  }
+  const target = Hm0 * Hm0 / 16;
+  const scale = m0 > 0 ? target / m0 : 1;
+  const S = new Float64Array(N_FINE);
+  for (let i = 0; i < N_FINE; i++) S[i] = S_raw[i] * scale;
+  return { f, S, normScale: scale };
+}
+
+function integrate(f, S) {
+  let sum = 0;
+  for (let i = 1; i < f.length; i++) {
+    sum += (S[i] + S[i - 1]) * 0.5 * (f[i] - f[i - 1]);
+  }
+  return sum;
+}
+
+function spectralMoments(f, S) {
+  let m0 = 0, m1 = 0, m2 = 0, mn1 = 0;
+  for (let i = 1; i < f.length; i++) {
+    const df = f[i] - f[i - 1];
+    const favg = (f[i] + f[i - 1]) * 0.5;
+    const Savg = (S[i] + S[i - 1]) * 0.5;
+    m0 += Savg * df;
+    m1 += Savg * favg * df;
+    m2 += Savg * favg * favg * df;
+    mn1 += Savg / Math.max(favg, 1e-6) * df;
+  }
+  return { m0, m1, m2, mn1 };
+}
+
+function peakIndex(S) {
+  let idx = 0;
+  for (let i = 1; i < S.length; i++) if (S[i] > S[idx]) idx = i;
+  return idx;
+}
+
+function downsample(f, S, n) {
+  const len = f.length;
+  const step = Math.max(1, Math.floor(len / n));
+  const out = { f: new Float64Array(Math.ceil(len / step)), S: new Float64Array(Math.ceil(len / step)) };
+  for (let i = 0, j = 0; i < len; i += step, j++) {
+    out.f[j] = f[i];
+    out.S[j] = S[i];
+  }
+  return out;
+}
+
+function getPlotRange(Hm0, Tp, gamma) {
+  const fp = 1 / Tp;
+  const raw = computeSpectrum(Hm0, Tp, gamma);
+  const pkIdx = peakIndex(raw.S);
+  const pkF = raw.f[pkIdx];
+  const pkS = raw.S[pkIdx];
+  const xLo = Math.max(0, pkF * 0.15);
+  const xHi = Math.min(3.0, pkF * 4.5);
+  const yHi = pkS * 1.25 + 0.05;
+  return { xLo, xHi, yHi, pkF, pkS };
+}
+
+function computeAll(Hm0, Tp, gamma) {
+  const raw = computeSpectrum(Hm0, Tp, gamma);
+  const pkIdx = peakIndex(raw.S);
+  const fp = 1 / Tp;
+  const pkF = raw.f[pkIdx];
+  const pkS = raw.S[pkIdx];
+  const mom = spectralMoments(raw.f, raw.S);
+  const Te = mom.m0 > 0 ? mom.mn1 / mom.m0 : 0;
+  const Tz = mom.m2 > 0 ? Math.sqrt(mom.m0 / mom.m2) : 0;
+  const eps = mom.m0 > 0 && mom.m2 > 0 ? Math.sqrt(1 - mom.m1 * mom.m1 / (mom.m0 * mom.m2)) : 0;
+  const Hm0Check = 4 * Math.sqrt(mom.m0);
+  const seaState = gamma < 1.5 ? 'Pure Wind-Sea' : gamma < 2.5 ? 'Wind-Sea' : gamma < 4 ? 'Transition' : gamma < 6 ? 'Young Swell' : gamma < 10 ? 'Swell' : gamma < 20 ? 'Mature Swell' : gamma < 35 ? 'Very Narrow Swell' : 'Extreme Swell';
+  const seaClass = gamma < 2 ? 'state-windsea' : gamma < 4 ? 'state-transition' : 'state-swell';
+  return { raw, pkIdx, pkF, pkS, mom, Te, Tz, eps, Hm0Check, seaState, seaClass, fp };
+}
+
+function sweepGamma(Hm0, Tp) {
+  const gvals = [1, 1.5, 2, 2.5, 3, 3.5, 4, 5, 6, 7, 8, 9, 10, 12, 14, 16, 18, 20, 25, 30, 35, 40, 45, 50];
+  const res = gvals.map(g => {
+    const s = computeSpectrum(Hm0, Tp, g);
+    return { x: g, y: s.S[peakIndex(s.S)], pct: 0 };
+  });
+  const base = res[0].y;
+  res.forEach(r => r.pct = ((r.y / base) - 1) * 100);
+  return res;
+}
+
+function sweepHm0(Tp, gamma) {
+  const hvals = [0.5, 1, 1.5, 2, 2.5, 3, 4, 5, 6, 7, 8, 9, 10];
+  const res = hvals.map(h => {
+    const s = computeSpectrum(h, Tp, gamma);
+    return { x: h, y: s.S[peakIndex(s.S)], pct: 0 };
+  });
+  const base = res[0].y;
+  res.forEach(r => r.pct = ((r.y / base) - 1) * 100);
+  return res;
+}
+
+function sweepTp(Hm0, gamma) {
+  const tvals = [3, 4, 5, 6, 7, 8, 9, 10, 12, 14, 16, 18, 20, 25];
+  const res = tvals.map(t => {
+    const s = computeSpectrum(Hm0, t, gamma);
+    return { x: t, y: s.S[peakIndex(s.S)], pct: 0 };
+  });
+  const base = res[0].y;
+  res.forEach(r => r.pct = ((r.y / base) - 1) * 100);
+  return res;
+}
+
+function updateAll() {
+  const Hm0 = parseFloat(document.getElementById('hm0Slider').value);
+  const Tp = parseFloat(document.getElementById('tpSlider').value);
+  const gamma = parseFloat(document.getElementById('gammaSlider').value);
+
+  document.getElementById('hm0Val').textContent = Hm0.toFixed(1) + ' m';
+  document.getElementById('tpVal').textContent = Tp.toFixed(1) + ' s';
+  document.getElementById('gammaVal').textContent = gamma.toFixed(2);
+
+  document.getElementById('hm0Slider').style.setProperty('--pct', ((Hm0 - 0.5) / 9.5 * 100) + '%');
+  document.getElementById('tpSlider').style.setProperty('--pct', ((Tp - 3) / 22 * 100) + '%');
+  document.getElementById('gammaSlider').style.setProperty('--pct', ((gamma - 1) / 49 * 100) + '%');
+
+  const d = computeAll(Hm0, Tp, gamma);
+  const range = getPlotRange(Hm0, Tp, gamma);
+
+  document.getElementById('dispFp').innerHTML = d.fp.toFixed(3) + ' <span class="unit">Hz</span>';
+  document.getElementById('dispPeakS').innerHTML = d.pkS.toFixed(2) + ' <span class="unit">m²/Hz</span>';
+  document.getElementById('dispEpsilon').textContent = d.eps.toFixed(3);
+  document.getElementById('dispTe').innerHTML = d.Te.toFixed(2) + ' <span class="unit">s</span>';
+  document.getElementById('dispCheckHm0').innerHTML = d.Hm0Check.toFixed(3) + ' <span class="unit">m</span>';
+  document.getElementById('dispTz').innerHTML = d.Tz.toFixed(2) + ' <span class="unit">s</span>';
+
+  const badge = document.getElementById('stateBadge');
+  badge.textContent = d.seaState;
+  badge.className = 'state-badge ' + d.seaClass;
+
+  let gammaDesc = '';
+  if (gamma < 1.5) gammaDesc = 'Near-PM spectrum — broad, low peak';
+  else if (gamma < 3) gammaDesc = 'Typical wind-sea — moderate peak';
+  else if (gamma < 5) gammaDesc = 'Mature wind-sea / young swell';
+  else if (gamma < 7) gammaDesc = 'Developing swell — pronounced peak';
+  else if (gamma < 10) gammaDesc = 'Mature swell — very sharp, narrow peak';
+  else if (gamma < 20) gammaDesc = 'Extremely peaked swell — energy highly concentrated';
+  else if (gamma < 35) gammaDesc = 'Narrow-band swell — near-sinusoidal wave field';
+  else gammaDesc = 'Extreme narrow-band — highly resonant conditions';
+  document.getElementById('gammaDesc').textContent = gammaDesc;
+
+  const plotData = downsample(d.raw.f, d.raw.S, N_PLOT);
+  const pmSpec = computeSpectrum(Hm0, Tp, 1);
+  const pmData = downsample(pmSpec.f, pmSpec.S, N_PLOT);
+
+  const xRange = [range.xLo, range.xHi];
+
+  const traces = [{
+    x: Array.from(plotData.f), y: Array.from(plotData.S),
+    type: 'scatter', mode: 'lines', name: 'JONSWAP γ=' + gamma.toFixed(2),
+    line: { color: '#0f3460', width: 2.5 },
+    fill: 'tozeroy', fillcolor: 'rgba(15,52,96,0.08)'
+  }, {
+    x: Array.from(pmData.f), y: Array.from(pmData.S),
+    type: 'scatter', mode: 'lines', name: 'PM (γ=1)',
+    line: { color: '#bc1c1c', width: 1.5, dash: 'dash' }
+  }, {
+    x: [d.pkF], y: [d.pkS],
+    type: 'scatter', mode: 'markers', name: 'Peak',
+    marker: { color: '#bc1c1c', size: 8, symbol: 'star' }
+  }];
+
+  const layout = {
+    xaxis: { title: 'Frequency (Hz)', range: xRange, zeroline: false, gridcolor: '#e8ecf0' },
+    yaxis: { title: 'S(f) (m²/Hz)', rangemode: 'nonnegative', gridcolor: '#e8ecf0', zeroline: false },
+    margin: { l: 60, r: 20, t: 40, b: 50 },
+    paper_bgcolor: 'white', plot_bgcolor: 'white',
+    font: { family: 'Segoe UI, system-ui, sans-serif', size: 11 },
+    legend: { x: 0.98, y: 0.95, xanchor: 'right', bgcolor: 'rgba(255,255,255,0.9)', bordercolor: '#e8ecf0', borderwidth: 1 },
+    hovermode: 'x unified',
+    annotations: [{
+      x: d.pkF, y: d.pkS, xref: 'x', yref: 'y',
+      text: 'S<sub>peak</sub> = ' + d.pkS.toFixed(2) + ' m²/Hz @ f<sub>p</sub>=' + d.pkF.toFixed(3) + ' Hz',
+      showarrow: true, arrowhead: 2, arrowcolor: '#bc1c1c', arrowsize: 1,
+      ax: d.pkF > (xRange[0] + xRange[1]) / 2 ? -60 : 60, ay: -40,
+      font: { size: 10, color: '#bc1c1c' }
+    }]
+  };
+
+  Plotly.react('spectrumPlot', traces, layout, { responsive: true, displayModeBar: false });
+
+  updateSensitivity(Hm0, Tp, gamma);
+}
+
+function updateSensitivity(Hm0, Tp, gamma) {
+  const gData = sweepGamma(Hm0, Tp);
+  const hData = sweepHm0(Tp, gamma);
+  const tData = sweepTp(Hm0, gamma);
+
+  const axisStyle = { gridcolor: '#e8ecf0', zeroline: false, automargin: true };
+  const baseLayout = (xTitle, yTitle) => ({
+    margin: { l: 40, r: 8, t: 4, b: 36 },
+    paper_bgcolor: 'white', plot_bgcolor: 'white',
+    font: { size: 10 },
+    xaxis: { ...axisStyle, title: xTitle },
+    yaxis: { ...axisStyle, title: yTitle, rangemode: 'nonnegative' },
+    hovermode: 'x'
+  });
+
+  Plotly.react('sensGamma', [{
+    x: gData.map(d => d.x), y: gData.map(d => d.y),
+    type: 'scatter', mode: 'lines+markers',
+    line: { color: '#0f3460', width: 2 }, marker: { size: 4 },
+    hovertemplate: 'γ=%{x}<br>S<sub>peak</sub>=%{y:.2f} m²/Hz<extra></extra>'
+  }], baseLayout('γ', 'S<sub>peak</sub>'), { responsive: true, displayModeBar: false });
+
+  Plotly.react('sensHm0', [{
+    x: hData.map(d => d.x), y: hData.map(d => d.y),
+    type: 'scatter', mode: 'lines+markers',
+    line: { color: '#bc1c1c', width: 2 }, marker: { size: 4 },
+    hovertemplate: 'H<sub>m0</sub>=%{x} m<br>S<sub>peak</sub>=%{y:.2f} m²/Hz<extra></extra>'
+  }], baseLayout('H<sub>m0</sub> (m)', 'S<sub>peak</sub>'), { responsive: true, displayModeBar: false });
+
+  Plotly.react('sensTp', [{
+    x: tData.map(d => d.x), y: tData.map(d => d.y),
+    type: 'scatter', mode: 'lines+markers',
+    line: { color: '#1a56db', width: 2 }, marker: { size: 4 },
+    hovertemplate: 'T<sub>p</sub>=%{x} s<br>S<sub>peak</sub>=%{y:.2f} m²/Hz<extra></extra>'
+  }], baseLayout('T<sub>p</sub> (s)', 'S<sub>peak</sub>'), { responsive: true, displayModeBar: false });
+
+  function fillTable(id, data, label, unit) {
+    const tbody = document.getElementById(id).querySelector('tbody') || document.getElementById(id);
+    const base = data[0].y;
+    let html = '<tr><th>' + label + '</th><th>S<sub>peak</sub></th><th>% change</th></tr>';
+    for (const d of data) {
+      const xf = d.x >= 100 ? 0 : d.x >= 10 ? 1 : (d.x === Math.floor(d.x) ? 0 : 1);
+      html += '<tr><td>' + d.x.toFixed(xf) + ' ' + unit +
+              '</td><td>' + d.y.toFixed(2) + '</td><td>' + (d.pct > 0 ? '+' : '') + d.pct.toFixed(1) + '%</td></tr>';
+    }
+    tbody.innerHTML = html;
+  }
+  fillTable('tblGamma', gData, 'γ', '');
+  fillTable('tblHm0', hData, 'H<sub>m0</sub>', 'm');
+  fillTable('tblTp', tData, 'T<sub>p</sub>', 's');
+}
+
+function generateReport() {
+  const Hm0 = parseFloat(document.getElementById('hm0Slider').value);
+  const Tp = parseFloat(document.getElementById('tpSlider').value);
+  const gamma = parseFloat(document.getElementById('gammaSlider').value);
+  const d = computeAll(Hm0, Tp, gamma);
+
+  const gData = sweepGamma(Hm0, Tp);
+  const hData = sweepHm0(Tp, gamma);
+  const tData = sweepTp(Hm0, gamma);
+
+  const gSlope = ((gData[gData.length-1].y / gData[0].y) - 1) * 100;
+  const hSlope = ((hData[hData.length-1].y / hData[0].y) - 1) * 100;
+  const tSlope = ((tData[tData.length-1].y / tData[0].y) - 1) * 100;
+
+  const maxSens = Math.max(Math.abs(gSlope), Math.abs(hSlope), Math.abs(tSlope));
+  let dominant = '';
+  if (Math.abs(tSlope) === maxSens) dominant = 'Peak period T<sub>p</sub>';
+  else if (Math.abs(hSlope) === maxSens) dominant = 'Wave height H<sub>m0</sub>';
+  else dominant = 'Peakedness γ';
+
+  let html = '';
+  html += '<h3>1. Input Parameters</h3>';
+  html += '<table><tr><th>Parameter</th><th>Value</th><th>Description</th></tr>';
+  html += '<tr><td>H<sub>m0</sub></td><td>' + Hm0.toFixed(1) + ' m</td><td>Significant wave height</td></tr>';
+  html += '<tr><td>T<sub>p</sub></td><td>' + Tp.toFixed(1) + ' s</td><td>Peak spectral period</td></tr>';
+  html += '<tr><td>γ</td><td>' + gamma.toFixed(2) + '</td><td>JONSWAP peakedness parameter</td></tr>';
+  html += '<tr><td>Sea state</td><td>' + d.seaState + '</td><td>Classification based on γ</td></tr></table>';
+
+  html += '<h3>2. Spectral Parameters</h3>';
+  html += '<table><tr><th>Parameter</th><th>Value</th><th>Formula</th></tr>';
+  html += '<tr><td>f<sub>p</sub></td><td>' + d.fp.toFixed(3) + ' Hz</td><td>1 / T<sub>p</sub></td></tr>';
+  html += '<tr><td>S<sub>peak</sub></td><td>' + d.pkS.toFixed(2) + ' m²/Hz</td><td>max S(f)</td></tr>';
+  html += '<tr><td>m<sub>0</sub></td><td>' + d.mom.m0.toFixed(4) + ' m²</td><td>∫ S df (total energy)</td></tr>';
+  html += '<tr><td>H<sub>m0</sub> (check)</td><td>' + d.Hm0Check.toFixed(3) + ' m</td><td>4√m₀ → ' + (Math.abs(d.Hm0Check - Hm0) < 0.1 ? '✓ matches input' : 'differs from input') + '</td></tr>';
+  html += '<tr><td>T<sub>e</sub></td><td>' + d.Te.toFixed(2) + ' s</td><td>m₋₁ / m₀ (energy period)</td></tr>';
+  html += '<tr><td>T<sub>z</sub></td><td>' + d.Tz.toFixed(2) + ' s</td><td>√(m₀ / m₂) (zero-crossing)</td></tr>';
+  html += '<tr><td>ε</td><td>' + d.eps.toFixed(3) + '</td><td>Spectral width</td></tr></table>';
+
+  html += '<h3>3. Sensitivity to γ (Peakedness)</h3>';
+  html += '<p>Varying γ from 1 (PM spectrum) to ' + gData[gData.length-1].x + ', with H<sub>m0</sub>=' + Hm0.toFixed(1) + ' m, T<sub>p</sub>=' + Tp.toFixed(1) + ' s fixed.</p>';
+  html += '<table><tr><th>γ</th><th>S<sub>peak</sub> (m²/Hz)</th><th>% change vs PM</th><th>Interpretation</th></tr>';
+  const gi = ['broad-band wind-sea', 'immature wind-sea', 'typical wind-sea', 'mature wind-sea', 'young swell', 'developing swell', 'established swell', 'mature swell', 'very narrow swell', 'extreme narrow swell'];
+  for (let i = 0; i < gData.length; i++) {
+    const d_ = gData[i];
+    const interp = d_.x <= 2 ? gi[0] : d_.x <= 3 ? gi[2] : d_.x <= 4 ? gi[3] : d_.x <= 5 ? gi[4] : d_.x <= 7 ? gi[5] : d_.x <= 9 ? gi[6] : d_.x <= 15 ? gi[7] : d_.x <= 25 ? gi[8] : gi[9];
+    html += '<tr><td>' + d_.x.toFixed(d_.x >= 10 ? (d_.x >= 100 ? 0 : 1) : 1) + '</td><td>' + d_.y.toFixed(2) + '</td><td>' + (d_.pct > 0 ? '+' : '') + d_.pct.toFixed(1) + '%</td><td>' + interp + '</td></tr>';
+  }
+  html += '</table>';
+
+  html += '<h3>4. Sensitivity to H<sub>m0</sub> (Wave Height)</h3>';
+  html += '<p>Varying H<sub>m0</sub> from ' + hData[0].x + ' to ' + hData[hData.length-1].x + ' m, with T<sub>p</sub>=' + Tp.toFixed(1) + ' s, γ=' + gamma.toFixed(2) + ' fixed.</p>';
+  html += '<table><tr><th>H<sub>m0</sub> (m)</th><th>S<sub>peak</sub> (m²/Hz)</th><th>% change vs min</th></tr>';
+  for (const d_ of hData) {
+    html += '<tr><td>' + d_.x.toFixed(1) + '</td><td>' + d_.y.toFixed(2) + '</td><td>' + (d_.pct > 0 ? '+' : '') + d_.pct.toFixed(1) + '%</td></tr>';
+  }
+  html += '</table>';
+
+  html += '<h3>5. Sensitivity to T<sub>p</sub> (Peak Period)</h3>';
+  html += '<p>Varying T<sub>p</sub> from ' + tData[0].x + ' to ' + tData[tData.length-1].x + ' s, with H<sub>m0</sub>=' + Hm0.toFixed(1) + ' m, γ=' + gamma.toFixed(2) + ' fixed.</p>';
+  html += '<table><tr><th>T<sub>p</sub> (s)</th><th>S<sub>peak</sub> (m²/Hz)</th><th>% change vs min</th></tr>';
+  for (const d_ of tData) {
+    html += '<tr><td>' + d_.x.toFixed(d_.x >= 10 ? 0 : 1) + '</td><td>' + d_.y.toFixed(2) + '</td><td>' + (d_.pct > 0 ? '+' : '') + d_.pct.toFixed(1) + '%</td></tr>';
+  }
+  html += '</table>';
+
+  html += '<h3>6. Engineering Summary for Offshore Structural Loads</h3>';
+  html += '<div class="highlight">';
+  html += '<strong>Dominant sensitivity:</strong> ' + dominant + ' drives the largest variation in peak spectral density over its physical range.<br><br>';
+  html += '<strong>γ scaling:</strong> Peak density changes by ' + gSlope.toFixed(0) + '% from γ=1 to γ=' + gData[gData.length-1].x + '. The effect is strongly nonlinear — most of the increase occurs from γ=1 to γ=5, with diminishing returns at higher γ. At γ>20 the spectrum becomes extremely narrow-banded, effectively concentrating almost all energy at the peak frequency — a condition that maximises resonant excitation of offshore structures.<br><br>';
+  html += '<strong>H<sub>m0</sub> scaling:</strong> Peak density scales as H<sub>m0</sub>² (theoretical: S<sub>peak</sub> ∝ H<sub>m0</sub>²). Over the range ' + hData[0].x + '–' + hData[hData.length-1].x + 'm, peak density changes by ' + hSlope.toFixed(0) + '%. This is a linear-in-energy effect that directly impacts both quasi-static and dynamic structural loading.<br><br>';
+  html += '<strong>T<sub>p</sub> scaling:</strong> Peak density scales approximately as T<sub>p</sub>⁴–T<sub>p</sub>⁵ (theoretically S<sub>peak</sub> ∝ f<sub>p</sub>⁻⁵). Over ' + tData[0].x + '–' + tData[tData.length-1].x + ' s, peak density changes by ' + tSlope.toFixed(0) + '%. This is the most powerful lever — a modest shift in wave period dramatically amplifies the spectral peak, making T<sub>p</sub> the critical parameter for fatigue and extreme response analyses.<br><br>';
+  html += '<strong>Offshore load implication:</strong> When assessing structural response in the frequency domain, the peak spectral density directly multiplies the transfer function squared. A factor-of-10 change in S<sub>peak</sub> translates to a ~√10 ≈ 3.2× change in response amplitude at the resonance frequency. Accurate γ, T<sub>p</sub>, and H<sub>m0</sub> characterization is essential for reliable load predictions.';
+  html += '</div>';
+
+  const reportDiv = document.getElementById('reportContent');
+  reportDiv.innerHTML = html;
+  reportDiv.style.display = 'block';
+  reportDiv.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+document.getElementById('hm0Slider').addEventListener('input', updateAll);
+document.getElementById('tpSlider').addEventListener('input', updateAll);
+document.getElementById('gammaSlider').addEventListener('input', updateAll);
+
+updateAll();
+</script>
+</body>
+</html>

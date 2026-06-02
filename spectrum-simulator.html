@@ -20,7 +20,7 @@ header p { font-size: 0.85rem; opacity: 0.75; margin-top: 4px; }
 .control-group label .val { color: #0f3460; font-weight: 600; font-family: 'JetBrains Mono', 'Consolas', monospace; }
 .control-group input[type="range"] { width: 100%; height: 5px; -webkit-appearance: none; appearance: none; background: linear-gradient(90deg, #0f3460 var(--pct), #d0d8e0 var(--pct)); border-radius: 3px; outline: none; cursor: pointer; }
 .control-group input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%; background: #0f3460; cursor: pointer; border: 2px solid white; box-shadow: 0 1px 4px rgba(0,0,0,0.2); }
-.control-group .range-labels { display: flex; justify-content: space-between; font-size: 0.68rem; color: #8a9aaa; margin-top: 1px; }
+.control-group .range-labels { display: flex; justify-content: space-between; font-size: 0.68rem; color: #8a9aaa; margin-top: 4px; }
 .control-section-label { font-size: 0.72rem; font-weight: 600; color: #5a6a7a; border-bottom: 1px solid #dce0e4; padding-bottom: 4px; margin: 14px 0 10px; text-transform: uppercase; letter-spacing: 0.05em; }
 select { width: 100%; padding: 8px 10px; border: 1px solid #d0d8e0; border-radius: 6px; font-size: 0.82rem; background: white; color: #1a1a2e; cursor: pointer; outline: none; }
 select:focus { border-color: #0f3460; box-shadow: 0 0 0 2px rgba(15,52,96,0.15); }
@@ -40,8 +40,6 @@ select:focus { border-color: #0f3460; box-shadow: 0 0 0 2px rgba(15,52,96,0.15);
 .param-card .value .unit { font-size: 0.68rem; font-weight: 400; color: #8a9aaa; }
 .section { padding: 24px; background: white; border-radius: 12px; box-shadow: 0 4px 24px rgba(0,0,0,0.06); margin-top: 20px; }
 .section h2 { font-size: 1rem; font-weight: 600; margin-bottom: 16px; color: #0f3460; }
-.sens-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
-.sens-plot { height: 220px; }
 .report-btn { background: #0f3460; color: white; border: none; padding: 12px 32px; border-radius: 8px; font-size: 0.9rem; font-weight: 600; cursor: pointer; transition: background 0.2s; }
 .report-btn:hover { background: #16213e; }
 #reportContent { display: none; margin-top: 20px; padding: 24px; background: #fafbfc; border: 1px solid #e8ecf0; border-radius: 8px; font-size: 0.85rem; line-height: 1.7; }
@@ -53,7 +51,7 @@ select:focus { border-color: #0f3460; box-shadow: 0 0 0 2px rgba(15,52,96,0.15);
 #reportContent td:first-child { text-align: left; font-weight: 500; }
 #reportContent .highlight { background: #fef9e7; padding: 8px 12px; border-left: 3px solid #f59e0b; border-radius: 4px; margin: 8px 0; font-size: 0.82rem; }
 .descr { font-size: 0.72rem; color: #6a7a8a; margin: -6px 0 10px; }
-@media (max-width: 900px) { .main-layout { grid-template-columns: 1fr; } .controls-panel { border-right: none; border-bottom: 1px solid #e8ecf0; max-height: none; } .sens-grid { grid-template-columns: 1fr; } }
+@media (max-width: 900px) { .main-layout { grid-template-columns: 1fr; } .controls-panel { border-right: none; border-bottom: 1px solid #e8ecf0; max-height: none; } }
 @media (pointer: coarse) {
   .control-group input[type="range"]::-webkit-slider-thumb { width: 28px; height: 28px; }
   .control-group input[type="range"]::-moz-range-thumb { width: 28px; height: 28px; }
@@ -64,8 +62,8 @@ select:focus { border-color: #0f3460; box-shadow: 0 0 0 2px rgba(15,52,96,0.15);
 <div class="container">
 <header>
 <div>
-<h1>Wave Spectrum Simulator</h1>
-<p>JONSWAP &middot; PM Generalized &middot; PM ITTC &middot; Ochi-Hubble &middot; TMA &middot; White Noise &middot; Regular Wave &middot; Custom</p>
+<h1>Wave Spectrum and Time-Series Simulation and Analysis</h1>
+<p>JONSWAP &middot; PM Generalized &middot; PM ITTC &middot; Ochi-Hubble &middot; TMA &middot; User-selected &nbsp;|&nbsp; Time-series and FFT</p>
 </div>
 <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
 <div id="stateBadge" class="state-badge state-neutral">Select a model</div>
@@ -83,21 +81,20 @@ select:focus { border-color: #0f3460; box-shadow: 0 0 0 2px rgba(15,52,96,0.15);
 <option value="pm-ittc">PM ITTC (Hs, Tz)</option>
 <option value="ochi-hubble">Ochi-Hubble (bimodal swell+sea)</option>
 <option value="tma">TMA — shallow water (Hs, Tp, γ, d)</option>
-<option value="white-noise">White Noise (Hs, fmin, fmax)</option>
-<option value="regular-wave">Regular Wave (H, T)</option>
+<option value="custom">User-selected spectrum</option>
 </select>
 </div>
 
 <div class="control-group" id="compareSection">
 <label style="font-size:0.75rem;color:#5a6a7a;margin-bottom:4px;">Compare overlay models</label>
+<div style="font-size:0.68rem;color:#8a9aaa;margin-bottom:6px;line-height:1.3;">Make sure to set the intended parameters for each overlay model by selecting it as the active model first.</div>
 <div style="display:flex;flex-wrap:wrap;gap:2px 12px;font-size:0.78rem;">
 <label style="font-weight:400;display:flex;align-items:center;gap:3px;"><input type="checkbox" class="compare-cb" value="jonswap" onchange="updateAll()"> <span style="color:#e74c3c;">●</span> JONSWAP</label>
 <label style="font-weight:400;display:flex;align-items:center;gap:4px;"><input type="checkbox" class="compare-cb" value="pm-generalized" onchange="updateAll()"> <span style="color:#2ecc71;">●</span> PM Gen.</label>
 <label style="font-weight:400;display:flex;align-items:center;gap:4px;"><input type="checkbox" class="compare-cb" value="pm-ittc" onchange="updateAll()"> <span style="color:#3498db;">●</span> PM ITTC</label>
 <label style="font-weight:400;display:flex;align-items:center;gap:4px;"><input type="checkbox" class="compare-cb" value="ochi-hubble" onchange="updateAll()"> <span style="color:#9b59b6;">●</span> Ochi-H.</label>
 <label style="font-weight:400;display:flex;align-items:center;gap:4px;"><input type="checkbox" class="compare-cb" value="tma" onchange="updateAll()"> <span style="color:#f39c12;">●</span> TMA</label>
-<label style="font-weight:400;display:flex;align-items:center;gap:4px;"><input type="checkbox" class="compare-cb" value="white-noise" onchange="updateAll()"> <span style="color:#1abc9c;">●</span> White N.</label>
-<label style="font-weight:400;display:flex;align-items:center;gap:4px;"><input type="checkbox" class="compare-cb" value="regular-wave" onchange="updateAll()"> <span style="color:#e67e22;">●</span> Reg. Wave</label>
+<label id="customOverlayLabel" style="font-weight:400;display:flex;align-items:center;gap:4px;"><input type="checkbox" class="compare-cb" value="custom" onchange="updateAll()"> <span style="color:#e67e22;">●</span> User-selected</label>
 </div>
 </div>
 
@@ -211,69 +208,12 @@ select:focus { border-color: #0f3460; box-shadow: 0 0 0 2px rgba(15,52,96,0.15);
 <div id="depthDesc" class="descr" style="margin-top:-10px;">Shallow water modifies high-frequency tail.</div>
 </div>
 
-<div id="grp_white-noise" class="ctrl-group">
-<div class="control-group">
-<label>Significant wave height, Hs (m) <span class="val" id="wHsVal">2.50 m</span></label>
-<input type="range" id="wHsSlider" min="0.5" max="12" step="0.1" value="2.5">
-<div class="range-labels"><span>0.5 m</span><span>12 m</span></div>
-</div>
-<div class="control-group">
-<label>Min frequency, fmin (Hz) <span class="val" id="wFminVal">0.01 Hz</span></label>
-<input type="range" id="wFminSlider" min="0.01" max="0.5" step="0.01" value="0.01">
-<div class="range-labels"><span>0.01 Hz</span><span>0.5 Hz</span></div>
-</div>
-<div class="control-group">
-<label>Max frequency, fmax (Hz) <span class="val" id="wFmaxVal">1.00 Hz</span></label>
-<input type="range" id="wFmaxSlider" min="0.1" max="5.0" step="0.1" value="1.0">
-<div class="range-labels"><span>0.1 Hz</span><span>5.0 Hz</span></div>
-</div>
-<div class="descr">Flat spectrum: S(f) = const. Energy spread uniformly across the chosen frequency band.</div>
-</div>
 
-<div id="grp_regular-wave" class="ctrl-group">
-<div class="control-group">
-<label>Wave height, H (m) <span class="val" id="rHVal">2.00 m</span></label>
-<input type="range" id="rHSlider" min="0.1" max="10" step="0.1" value="2">
-<div class="range-labels"><span>0.1 m</span><span>10 m</span></div>
-</div>
-<div class="control-group">
-<label>Wave period, T (s) <span class="val" id="rTVal">8.0 s</span></label>
-<input type="range" id="rTSlider" min="3" max="25" step="0.5" value="8">
-<div class="range-labels"><span>3 s</span><span>25 s</span></div>
-</div>
-<div class="descr">Monochromatic wave — narrow Gaussian spike (σ=0.003 Hz) approximating a Dirac delta.</div>
-</div>
 
-<div id="grp_custom" class="custom-group" style="border-top:2px solid #e8ecf0;padding-top:8px;margin-top:8px;">
-<div class="control-section-label">Custom Spectrum Data</div>
-<div class="control-group">
-<label><input type="checkbox" id="customToggle" onchange="onCustomToggle()"> Show custom spectrum</label>
-</div>
-<div id="customInputPanel" style="display:none;">
-<div class="control-group">
-<label>Input mode</label>
-<select id="customMode" onchange="onCustomModeChange()">
-<option value="step">Constant frequency step (df)</option>
-<option value="pairs">Frequency + S(f) pairs</option>
-</select>
-</div>
-<div id="customStepPanel">
-<div class="control-group">
-<label>Frequency step, df (Hz) <span class="val" id="customDfVal">0.010 Hz</span></label>
-<input type="range" id="customDfSlider" min="0.001" max="0.1" step="0.001" value="0.01">
-<div class="range-labels"><span>0.001 Hz</span><span>0.1 Hz</span></div>
-</div>
-<div class="control-group">
-<label>Spectral density S(f) (m²/Hz) — one value per line</label>
-<textarea id="customStepText" rows="8" style="width:100%;font-family:monospace;font-size:0.8rem;padding:6px;border:1px solid #d0d8e0;border-radius:4px;resize:vertical;" placeholder="0.05
-0.12
-0.35
-0.78
-1.20
-..."></textarea>
-</div>
-</div>
-<div id="customPairsPanel" style="display:none;">
+<div id="grp_custom" class="ctrl-group">
+<div class="control-section-label" style="font-size:0.82rem;font-weight:500;margin-bottom:8px;color:#2a3a4a;">User-selected spectrum</div>
+<div id="customInputPanel">
+<div id="customPairsPanel">
 <div class="control-group">
 <label>f (Hz) and S(f) (m²/Hz) — one pair per line, space/comma/tab separated</label>
 <textarea id="customPairsText" rows="8" style="width:100%;font-family:monospace;font-size:0.8rem;padding:6px;border:1px solid #d0d8e0;border-radius:4px;resize:vertical;" placeholder="0.04 0.02
@@ -287,41 +227,23 @@ select:focus { border-color: #0f3460; box-shadow: 0 0 0 2px rgba(15,52,96,0.15);
 </div>
 </div>
 <div class="control-group" style="display:flex;gap:8px;">
-<button id="customLoadBtn" onclick="loadCustomSpectrum()" style="flex:1;padding:8px;background:#0f3460;color:white;border:none;border-radius:6px;font-weight:600;cursor:pointer;">Load</button>
-<button id="customExampleBtn" onclick="loadExampleSpectrum()" style="flex:1;padding:8px;background:#e8ecf0;color:#4a5a6a;border:none;border-radius:6px;font-weight:600;cursor:pointer;">Example</button>
-<button id="customClearBtn" onclick="clearCustomSpectrum()" style="flex:1;padding:8px;background:#e8ecf0;color:#4a5a6a;border:none;border-radius:6px;font-weight:600;cursor:pointer;">Clear</button>
+<button onclick="loadCustomSpectrum()" style="flex:1;padding:8px;background:#0f3460;color:white;border:none;border-radius:6px;font-weight:600;cursor:pointer;">Load</button>
+<button onclick="loadExampleSpectrum()" style="flex:1;padding:8px;background:#e8ecf0;color:#4a5a6a;border:none;border-radius:6px;font-weight:600;cursor:pointer;">Example</button>
+<button onclick="clearCustomSpectrum()" style="flex:1;padding:8px;background:#e8ecf0;color:#4a5a6a;border:none;border-radius:6px;font-weight:600;cursor:pointer;">Clear</button>
 </div>
 <div class="control-group">
-<label>Or upload a .csv / .txt file <span id="customFileName" style="font-weight:400;color:#8a9aaa;"></span></label>
-<input type="file" id="customFileInput" accept=".csv,.txt" onchange="onCustomFileUpload(event)" style="font-size:0.78rem;color:#2a3a4a;">
+<input type="file" id="customFileInput" accept=".csv,.txt" onchange="onCustomFileUpload(event)" style="display:none;">
+<button onclick="document.getElementById('customFileInput').click()" style="width:100%;padding:8px;background:#0f3460;color:white;border:none;border-radius:6px;font-weight:600;cursor:pointer;">Upload user-selected CSV</button>
+<span id="customFileName" style="font-size:0.72rem;color:#8a9aaa;margin-left:6px;"></span>
 </div>
 <div id="customStatus" style="font-size:0.72rem;color:#5a6a7a;margin-top:4px;"></div>
 </div>
 </div>
 
-<div id="grp_timedomain" class="custom-group" style="border-top:2px solid #e8ecf0;padding-top:8px;margin-top:8px;">
-<div class="control-section-label">Time Domain</div>
+<div id="grp_user_spectrum" class="custom-group" style="border-top:2px solid #e8ecf0;padding-top:8px;margin-top:8px;">
+<div class="control-section-label">FFT spectrum from time-series</div>
 <div class="control-group">
-<label><input type="checkbox" id="tdToggle" onchange="onTDToggle()"> Show time series</label>
-</div>
-<div id="tdPanel" style="display:none;">
-<div class="control-group">
-<label>Duration <span class="val" id="tdDurVal">180 s</span></label>
-<input type="range" id="tdDurSlider" min="30" max="3600" step="5" value="180">
-<div class="range-labels"><span>30 s</span><span>3600 s</span></div>
-</div>
-<div class="control-group">
-<label>Random seed <span class="val" id="tdSeedVal">0</span></label>
-<input type="range" id="tdSeedSlider" min="0" max="999" step="1" value="0">
-<div class="range-labels"><span>0</span><span>999</span></div>
-</div>
-<button onclick="generateTimeSeries()" style="width:100%;padding:8px;background:#0f3460;color:white;border:none;border-radius:6px;font-weight:600;cursor:pointer;">Generate</button>
-<div class="control-group">
-<label style="font-size:0.72rem;margin-top:6px;">Or upload time-series CSV <span id="tdFileName" style="font-weight:400;color:#8a9aaa;"></span></label>
-<input type="file" id="tdFileInput" accept=".csv,.txt" onchange="onTDFileUpload(event)" style="font-size:0.7rem;color:#2a3a4a;">
-</div>
-<div class="control-group" style="margin-top:6px;">
-<label><input type="checkbox" id="fftOverlayToggle" onchange="onFFTOverlayToggle()"> Overlay FFT spectrum on plot</label>
+<button onclick="document.getElementById('tdFileInput').click()" style="width:100%;padding:8px;background:#0f3460;color:white;border:none;border-radius:6px;font-weight:600;cursor:pointer;">Upload time-series CSV</button>
 </div>
 <div id="fftSmoothPanel" style="display:none;">
 <div class="control-group">
@@ -331,6 +253,26 @@ select:focus { border-color: #0f3460; box-shadow: 0 0 0 2px rgba(15,52,96,0.15);
 </div>
 </div>
 <div id="fftStatus" style="font-size:0.7rem;color:#5a6a7a;"></div>
+</div>
+
+<div id="grp_timedomain" class="custom-group" style="border-top:2px solid #e8ecf0;padding-top:8px;margin-top:8px;">
+<div class="control-section-label">Time Domain Generation</div>
+<div class="control-group">
+<label><input type="checkbox" id="tdToggle" onchange="onTDToggle()"> Generate time-series</label>
+</div>
+<div id="tdPanel" style="display:none;">
+<div class="control-group">
+<label>Duration <span class="val" id="tdDurVal">180 s</span></label>
+<input type="range" id="tdDurSlider" min="30" max="3600" step="5" value="180">
+<div class="range-labels"><span>30 s</span><span>3600 s</span></div>
+</div>
+<div class="control-group">
+<label>Time step, dt <span class="val" id="tdDtVal">0.10 s</span></label>
+<input type="range" id="tdDtSlider" min="0.01" max="1.0" step="0.01" value="0.1">
+<div class="range-labels"><span>0.01 s</span><span>1.0 s</span></div>
+</div>
+<button onclick="generateTimeSeries()" style="width:100%;padding:8px;background:#0f3460;color:white;border:none;border-radius:6px;font-weight:600;cursor:pointer;">Generate</button>
+<input type="file" id="tdFileInput" accept=".csv,.txt" onchange="onTDFileUpload(event)" style="display:none;">
 </div>
 </div>
 
@@ -376,7 +318,9 @@ select:focus { border-color: #0f3460; box-shadow: 0 0 0 2px rgba(15,52,96,0.15);
 <div id="raoStatus" style="font-size:0.72rem;color:#5a6a7a;margin-top:4px;"></div>
 </div>
 </div>
-
+<div style="border-top:2px solid #e8ecf0;padding-top:8px;margin-top:8px;">
+<button class="report-btn" onclick="generateReport()" style="width:100%;">Generate Report</button>
+</div>
 </div>
 
 <div class="plot-area">
@@ -394,9 +338,6 @@ select:focus { border-color: #0f3460; box-shadow: 0 0 0 2px rgba(15,52,96,0.15);
 <div class="param-card"><div class="label">Wave Power P (deep)</div><div class="value" id="dispWavePower">— <span class="unit">kW/m</span></div></div>
 <div class="param-card" id="cardRaoHm0" style="display:none;"><div class="label">Response Hs</div><div class="value" id="dispRaoHm0">— <span class="unit">m</span></div></div>
 <div class="param-card" id="cardRaoPeak" style="display:none;"><div class="label">Response Peak S</div><div class="value" id="dispRaoPeak">— <span class="unit">m²/Hz</span></div></div>
-<div class="param-card" id="cardCustomR" style="display:none;"><div class="label">r vs Custom</div><div class="value" id="dispCustomR">—</div></div>
-<div class="param-card" id="cardCustomRMSE" style="display:none;"><div class="label">RMSE vs Custom</div><div class="value" id="dispCustomRMSE">— <span class="unit">m²/Hz</span></div></div>
-<div class="param-card" id="cardCustomKS" style="display:none;"><div class="label">KS vs Custom</div><div class="value" id="dispCustomKS">—</div></div>
 </div>
 <div class="params-strip" id="fftParamsStrip" style="display:none;background:#f0f4f8;border-top:2px solid #e91e63;">
 <div class="param-card"><div class="label">FFT fp</div><div class="value" id="fftDispFp">— <span class="unit">Hz</span></div></div>
@@ -409,40 +350,27 @@ select:focus { border-color: #0f3460; box-shadow: 0 0 0 2px rgba(15,52,96,0.15);
 <div style="display:flex;gap:8px;padding:4px 16px 8px;justify-content:flex-end;">
 <button onclick="saveConfig()" style="padding:4px 14px;background:#e8ecf0;color:#2a3a4a;border:none;border-radius:5px;font-weight:500;cursor:pointer;font-size:0.75rem;">Save config</button>
 <button onclick="loadConfig()" style="padding:4px 14px;background:#e8ecf0;color:#2a3a4a;border:none;border-radius:5px;font-weight:500;cursor:pointer;font-size:0.75rem;">Load config</button>
-<button onclick="downloadCSV()" style="padding:4px 14px;background:#e8ecf0;color:#2a3a4a;border:none;border-radius:5px;font-weight:500;cursor:pointer;font-size:0.75rem;">Download CSV</button>
+<button onclick="downloadCSV()" style="padding:4px 14px;background:#e8ecf0;color:#2a3a4a;border:none;border-radius:5px;font-weight:500;cursor:pointer;font-size:0.75rem;">Save CSV</button>
 <span id="configStatus" style="font-size:0.7rem;color:#8a9aaa;line-height:26px;"></span>
 </div>
 
-<div class="section">
-<h2>Sensitivity Analysis</h2>
-<p id="sensDesc" style="font-size:0.82rem;color:#5a6a7a;margin-bottom:12px;">Each plot shows how peak spectral density varies as one parameter is swept across its range.</p>
-<div class="sens-grid">
-<div id="sensPanel0"><h3 id="sensTitle0" style="font-size:0.8rem;margin-bottom:4px;color:#2a3a4a;">γ Sensitivity</h3><div id="sensPlot0" class="sens-plot"></div></div>
-<div id="sensPanel1"><h3 id="sensTitle1" style="font-size:0.8rem;margin-bottom:4px;color:#2a3a4a;">Hs Sensitivity</h3><div id="sensPlot1" class="sens-plot"></div></div>
-<div id="sensPanel2"><h3 id="sensTitle2" style="font-size:0.8rem;margin-bottom:4px;color:#2a3a4a;">Tp Sensitivity</h3><div id="sensPlot2" class="sens-plot"></div></div>
-</div>
-</div>
-
-<div class="section" style="text-align:center;">
-<button class="report-btn" onclick="generateReport()">Generate Engineering Report</button>
-<div id="reportActionBar" style="display:none;margin-top:10px;gap:8px;justify-content:center;">
+<div id="reportActionBar" style="display:none;margin-top:20px;gap:8px;justify-content:center;">
 <button onclick="copyReport(this)" style="padding:6px 18px;background:#e8ecf0;color:#2a3a4a;border:none;border-radius:6px;font-weight:600;cursor:pointer;font-size:0.82rem;">Copy to clipboard</button>
 <button onclick="downloadReport()" style="padding:6px 18px;background:#e8ecf0;color:#2a3a4a;border:none;border-radius:6px;font-weight:600;cursor:pointer;font-size:0.82rem;">Download HTML</button>
 <button onclick="toggleReport()" id="reportToggleBtn" style="padding:6px 18px;background:#e8ecf0;color:#2a3a4a;border:none;border-radius:6px;font-weight:600;cursor:pointer;font-size:0.82rem;">Hide report</button>
 </div>
-<div id="reportContent"></div>
-</div>
-</div>
+<div id="reportContent" style="padding:0 24px;"></div>
 
-<div id="tdSection" style="display:none;margin-top:20px;background:white;border-radius:12px;box-shadow:0 4px 24px rgba(0,0,0,0.06);overflow:hidden;">
-<div style="padding:20px 24px 12px;">
+<div id="tdSection" class="section" style="display:none;padding:0;overflow:hidden;">
+<div style="padding:24px 24px 0;">
 <h2 style="font-size:1rem;font-weight:600;color:#0f3460;">Time-Domain Realization</h2>
-<p style="font-size:0.82rem;color:#5a6a7a;">Wave elevation time series generated from the current spectrum via random-phase summation.</p>
+<p style="font-size:0.82rem;color:#5a6a7a;margin-top:4px;">Wave elevation time series generated from the current spectrum via random-phase summation.</p>
 </div>
 <div id="timeSeriesPlot" style="width:100%;height:300px;"></div>
 <div style="padding:8px 24px 16px;display:flex;justify-content:space-between;align-items:center;font-size:0.72rem;color:#8a9aaa;">
 <span id="tdStatus"></span>
-<button onclick="downloadTimeSeries()" style="padding:4px 14px;background:#e8ecf0;color:#2a3a4a;border:none;border-radius:5px;font-weight:500;cursor:pointer;font-size:0.75rem;">Download CSV</button>
+<button onclick="downloadTimeSeries()" style="padding:4px 14px;background:#e8ecf0;color:#2a3a4a;border:none;border-radius:5px;font-weight:500;cursor:pointer;font-size:0.75rem;">Save CSV</button>
+</div>
 </div>
 </div>
 
@@ -472,37 +400,28 @@ function interp1d(xq, x, y) {
   return out;
 }
 
-function parseCustomInput(mode) {
-  if (mode === 'step') {
-    const df = parseFloat(document.getElementById('customDfSlider').value);
-    const raw = document.getElementById('customStepText').value.trim();
-    if (!raw) throw new Error('Please enter spectral density values.');
-    const vals = raw.split(/\s+/).map(Number);
-    if (vals.length < 3) throw new Error('Enter at least 3 spectral density values.');
-    if (vals.length > 10000) throw new Error('Maximum 10,000 points allowed.');
-    if (vals.some(v => isNaN(v) || v < 0)) throw new Error('All values must be non-negative numbers.');
-    const n = vals.length;
-    const f = new Float64Array(n);
-    for (let i = 0; i < n; i++) f[i] = (i + 1) * df;
-    return { f, S: new Float64Array(vals), df };
-  } else {
-    const raw = document.getElementById('customPairsText').value.trim();
-    if (!raw) throw new Error('Please enter frequency and spectral density pairs.');
-    const lines = raw.split('\n').filter(l => l.trim());
-    if (lines.length < 3) throw new Error('Enter at least 3 pairs.');
-    if (lines.length > 10000) throw new Error('Maximum 10,000 points allowed.');
-    const f = [], S = [];
-    for (const line of lines) {
-      const parts = line.trim().split(/[,\s\t]+/).map(Number);
-      if (parts.length < 2 || isNaN(parts[0]) || isNaN(parts[1])) throw new Error('Invalid pair: ' + line.trim());
-      if (parts[0] <= 0) throw new Error('Frequencies must be positive.');
-      if (parts[1] < 0) throw new Error('Spectral density must be non-negative.');
-      if (f.length > 0 && parts[0] <= f[f.length - 1]) throw new Error('Frequencies must be strictly increasing.');
-      f.push(parts[0]);
-      S.push(parts[1]);
-    }
-    return { f: new Float64Array(f), S: new Float64Array(S), df: 0 };
+function parseCustomInput() {
+  const raw = document.getElementById('customPairsText').value.trim();
+  if (!raw) throw new Error('Please enter frequency and spectral density pairs.');
+  let lines = raw.split('\n').filter(l => l.trim());
+  if (lines.length < 3) throw new Error('Enter at least 3 pairs.');
+  if (lines.length > 10000) throw new Error('Maximum 10,000 points allowed.');
+  const firstTokens = lines[0].trim().split(/[,\s\t]+/);
+  if (firstTokens.length > 0 && isNaN(parseFloat(firstTokens[0]))) {
+    lines = lines.slice(1);
+    if (lines.length < 3) throw new Error('Enter at least 3 data rows after header.');
   }
+  const f = [], S = [];
+  for (const line of lines) {
+    const parts = line.trim().split(/[,\s\t]+/).map(Number);
+    if (parts.length < 2 || isNaN(parts[0]) || isNaN(parts[1])) throw new Error('Invalid pair: ' + line.trim());
+    if (parts[0] <= 0) throw new Error('Frequencies must be positive.');
+    if (parts[1] < 0) throw new Error('Spectral density must be non-negative.');
+    if (f.length > 0 && parts[0] <= f[f.length - 1]) throw new Error('Frequencies must be strictly increasing.');
+    f.push(parts[0]);
+    S.push(parts[1]);
+  }
+  return { f: new Float64Array(f), S: new Float64Array(S), df: 0 };
 }
 
 function computeAgreement(custom, model) {
@@ -686,33 +605,6 @@ function computeTMA(Hm0, Tp, gamma, depth) {
   return { f, S };
 }
 
-function computeWhiteNoise(Hs, fMin, fMax) {
-  const fa = Math.min(fMin, fMax), fb = Math.max(fMin, fMax);
-  const f = linspace(fa, fb, N_FINE);
-  const constVal = Hs * Hs / (16 * (fb - fa));
-  const S = new Float64Array(N_FINE);
-  for (let i = 0; i < N_FINE; i++) S[i] = constVal;
-  return { f, S };
-}
-
-function computeRegularWave(H, T) {
-  const fp = 1 / T;
-  const sigma = 0.003;
-  const fMin = Math.max(0.001, fp - 6 * sigma);
-  const fMax = fp + 6 * sigma;
-  const f = linspace(fMin, fMax, N_FINE);
-  const S = new Float64Array(N_FINE);
-  const norm = H * H / 8;
-  for (let i = 0; i < N_FINE; i++) {
-    S[i] = norm * Math.exp(-(f[i] - fp) * (f[i] - fp) / (2 * sigma * sigma)) / (sigma * Math.sqrt(2 * Math.PI));
-  }
-  let m0 = 0;
-  for (let i = 1; i < N_FINE; i++) m0 += (S[i] + S[i-1]) * 0.5 * (f[i] - f[i-1]);
-  const target = H * H / 8;
-  const scale = m0 > 0 ? target / m0 : 1;
-  for (let i = 0; i < N_FINE; i++) S[i] *= scale;
-  return { f, S };
-}
 
 function computeCurrent() {
   const type = document.getElementById('spectrumType').value;
@@ -750,17 +642,9 @@ function computeCurrent() {
         parseFloat(document.getElementById('tGammaSlider').value),
         parseFloat(document.getElementById('depthSlider').value)
       );
-    case 'white-noise':
-      return computeWhiteNoise(
-        parseFloat(document.getElementById('wHsSlider').value),
-        parseFloat(document.getElementById('wFminSlider').value),
-        parseFloat(document.getElementById('wFmaxSlider').value)
-      );
-    case 'regular-wave':
-      return computeRegularWave(
-        parseFloat(document.getElementById('rHSlider').value),
-        parseFloat(document.getElementById('rTSlider').value)
-      );
+    case 'custom':
+      if (customSpectrum) return { f: customSpectrum.f, S: customSpectrum.S };
+      return { f: new Float64Array([0, 1]), S: new Float64Array([0, 0]) };
   }
 }
 
@@ -797,6 +681,13 @@ function onTypeChange() {
   document.querySelectorAll('.ctrl-group').forEach(el => el.classList.remove('active'));
   const target = document.getElementById('grp_' + sel);
   if (target) target.classList.add('active');
+
+  // hide overlay checkboxes matching the current type
+  document.querySelectorAll('.compare-cb').forEach(cb => {
+    const label = cb.closest('label');
+    if (label) label.style.display = cb.value === sel ? 'none' : '';
+  });
+
   updateAll();
 }
 
@@ -805,10 +696,10 @@ function setRangeStyle(slider, min, max) {
   slider.style.setProperty('--pct', ((v - min) / (max - min) * 100) + '%');
 }
 
-let sensRafId = null;
-
 function updateAll() {
   const type = document.getElementById('spectrumType').value;
+  const customLabel = document.getElementById('customOverlayLabel');
+  if (customLabel) customLabel.style.display = (customSpectrum && type !== 'custom') ? '' : 'none';
   const res = computeCurrent();
   const pkIdx = peakIndex(res.S);
   const pkF = res.f[pkIdx], pkS = res.S[pkIdx];
@@ -871,15 +762,11 @@ function updateAll() {
     if (gamma < 2.5) { badgeText = 'TMA Wind-Sea'; seaClass = 'state-windsea'; }
     else if (gamma < 4) { badgeText = 'TMA Transition'; seaClass = 'state-transition'; }
     else { badgeText = 'TMA Swell'; seaClass = 'state-swell'; }
-  } else if (type === 'white-noise') {
-    badgeText = 'White Noise'; seaClass = 'state-neutral';
-  } else if (type === 'regular-wave') {
-    badgeText = 'Monochromatic'; seaClass = 'state-neutral';
+  } else if (type === 'custom') {
+    badgeText = customSpectrum ? 'User-selected spectrum' : 'No data loaded'; seaClass = 'state-neutral';
   }
   const badge = document.getElementById('stateBadge');
-  let badgeSuffix = '';
-  if (customSpectrum) badgeSuffix = ' [Custom: ✓]';
-  badge.textContent = badgeText + badgeSuffix;
+  badge.textContent = badgeText;
   badge.className = 'state-badge ' + seaClass;
 
   const range = getPlotRangeFromResult(res);
@@ -893,8 +780,7 @@ function updateAll() {
   else if (type === 'pm-ittc') mainName = 'PM ITTC (T\u2092)';
   else if (type === 'ochi-hubble') mainName = 'Ochi-Hubble (total)';
   else if (type === 'tma') { const d = parseFloat(document.getElementById('depthSlider').value); mainName = 'TMA (depth=' + d + ' m)'; }
-  else if (type === 'white-noise') mainName = 'White Noise';
-  else if (type === 'regular-wave') { const T = parseFloat(document.getElementById('rTSlider').value); mainName = 'Regular Wave (T=' + T.toFixed(1) + ' s)'; }
+  else if (type === 'custom') mainName = customSpectrum ? 'User-selected spectrum' : 'No data loaded';
 
   if (type === 'ochi-hubble' && res.S_swell && res.S_windsea) {
     const dsSwell = downsample(res.f, res.S_swell, N_PLOT);
@@ -924,28 +810,19 @@ function updateAll() {
     });
   }
 
-  if (customSpectrum) {
-    const dsCust = downsample(customSpectrum.f, customSpectrum.S, N_PLOT);
-    extraTraces.push({
-      x: Array.from(dsCust.f), y: Array.from(dsCust.S),
-      type: 'scatter', mode: 'lines', name: 'Custom Spectrum',
-      line: { color: '#e74c3c', width: 2.5, dash: 'dash' }
-    });
-  }
-
   if (fftSpectrum) {
     const dsFFT = downsample(fftSpectrum.f, fftSpectrum.S, N_PLOT);
     extraTraces.push({
       x: Array.from(dsFFT.f), y: Array.from(dsFFT.S),
-      type: 'scatter', mode: 'lines', name: 'FFT from TS',
+      type: 'scatter', mode: 'lines', name: 'From time-series CSV',
       line: { color: '#e91e63', width: 2, dash: 'solid' }
     });
   }
 
-  const compColors = ['#e74c3c','#2ecc71','#3498db','#9b59b6','#f39c12','#1abc9c','#e67e22'];
-  const compModels = ['jonswap','pm-generalized','pm-ittc','ochi-hubble','tma','white-noise','regular-wave'];
-  const compNames = ['JONSWAP','PM Generalized','PM ITTC','Ochi-Hubble','TMA','White Noise','Regular Wave'];
-  const compDash = ['solid','dot','dash','longdash','dot','dash','solid'];
+const compColors = ['#e74c3c','#2ecc71','#3498db','#9b59b6','#f39c12','#e67e22'];
+const compModels = ['jonswap','pm-generalized','pm-ittc','ochi-hubble','tma','custom'];
+const compNames = ['JONSWAP','PM Generalized','PM ITTC','Ochi-Hubble','TMA','User-selected'];
+  const compDash = ['solid','dot','dash','longdash','dot','dot'];
   document.querySelectorAll('.compare-cb:checked').forEach(cb => {
     const mi = compModels.indexOf(cb.value);
     if (mi < 0 || cb.value === type) return;
@@ -1013,28 +890,6 @@ function updateAll() {
   };
 
   Plotly.react('spectrumPlot', traces, layout, { responsive: true, displayModeBar: true, modeBarButtonsToRemove: ['sendDataToCloud', 'lasso2d', 'select2d'] });
-  if (sensRafId) cancelAnimationFrame(sensRafId);
-  sensRafId = requestAnimationFrame(() => {
-    updateSensitivity(type);
-    sensRafId = null;
-  });
-
-  if (customSpectrum) {
-    const agree = computeAgreement(customSpectrum, res);
-    const cardR = document.getElementById('cardCustomR');
-    const cardRMSE = document.getElementById('cardCustomRMSE');
-    const cardKS = document.getElementById('cardCustomKS');
-    cardR.style.display = '';
-    cardRMSE.style.display = '';
-    cardKS.style.display = '';
-    document.getElementById('dispCustomR').textContent = agree ? agree.r.toFixed(4) : '—';
-    document.getElementById('dispCustomRMSE').innerHTML = agree ? agree.rmse.toFixed(4) + ' <span class="unit">m\u00B2/Hz</span>' : '—';
-    document.getElementById('dispCustomKS').textContent = agree ? agree.ks.toFixed(4) : '—';
-  } else {
-    document.getElementById('cardCustomR').style.display = 'none';
-    document.getElementById('cardCustomRMSE').style.display = 'none';
-    document.getElementById('cardCustomKS').style.display = 'none';
-  }
 
   if (raoEnabled && raoRes) {
     const momR = spectralMoments(raoRes.f, raoRes.S);
@@ -1055,125 +910,6 @@ function getPlotRangeFromResult(res) {
   const pkIdx = peakIndex(res.S);
   const pkF = res.f[pkIdx], pkS = res.S[pkIdx];
   return { xLo: Math.max(0, pkF * 0.12), xHi: Math.min(3.0, pkF * 5.0), yHi: pkS * 1.3 + 0.05, pkF, pkS };
-}
-
-function sweepParam(sweepFn, label, nSamples, plotId, currentVal) {
-  const data = sweepFn(nSamples);
-  const layout = {
-    margin: { l: 40, r: 8, t: 4, b: 36 }, paper_bgcolor: 'white', plot_bgcolor: 'white',
-    font: { size: 10 },
-    xaxis: { gridcolor: '#e8ecf0', zeroline: false, automargin: true, title: label },
-    yaxis: { gridcolor: '#e8ecf0', zeroline: false, automargin: true, title: 'S<sub>peak</sub>', rangemode: 'nonnegative' },
-    hovermode: 'x'
-  };
-  if (currentVal !== undefined) {
-    layout.shapes = [{
-      type: 'line', x0: currentVal, x1: currentVal, y0: 0, y1: 1,
-      yref: 'paper', line: { color: '#bc1c1c', width: 1.5, dash: 'dot' }
-    }];
-  }
-  Plotly.react('sensPlot' + plotId, [{
-    x: data.map(d => d.x), y: data.map(d => d.y),
-    type: 'scatter', mode: 'lines+markers',
-    line: { color: '#0f3460', width: 2 }, marker: { size: 4 },
-    hovertemplate: label + '=%{x}<br>S<sub>peak</sub>=%{y:.2f} m\u00B2/Hz<extra></extra>'
-  }], layout, { responsive: true, displayModeBar: true, modeBarButtonsToRemove: ['sendDataToCloud', 'lasso2d', 'select2d'] });
-  return data;
-}
-
-function clearSensPanel(plotId, msg) {
-  Plotly.react('sensPlot' + plotId, [{
-    x: [], y: [], type: 'scatter', mode: 'text',
-    text: [msg], textposition: 'middle center',
-    textfont: { color: '#8a9aaa', size: 11 }
-  }], {
-    margin: { l: 8, r: 8, t: 8, b: 8 }, paper_bgcolor: 'white', plot_bgcolor: 'white',
-    xaxis: { visible: false, range: [0, 1] }, yaxis: { visible: false, range: [0, 1] }
-  }, { responsive: true, displayModeBar: true, modeBarButtonsToRemove: ['sendDataToCloud', 'lasso2d', 'select2d'] });
-}
-
-function updateSensitivity(type) {
-  function makeFn(factory) {
-    return function(n) {
-      const res = [];
-      for (let i = 0; i < n; i++) { const t = i / (n - 1); res.push(factory(t)); }
-      return res;
-    };
-  }
-
-  if (type === 'jonswap') {
-    const Hm0 = parseFloat(document.getElementById('hm0Slider').value);
-    const Tp = parseFloat(document.getElementById('tpSlider').value);
-    const gamma = parseFloat(document.getElementById('gammaSlider').value);
-    document.getElementById('sensTitle0').textContent = '\u03B3 (Peakedness)';
-    document.getElementById('sensTitle1').textContent = 'H\u209B (Wave Height)';
-    document.getElementById('sensTitle2').textContent = 'T\u209A (Peak Period)';
-    sweepParam(makeFn(t => { const g = 1 + t * 9; const s = computeJonswap(Hm0, Tp, g); return { x: g, y: s.S[peakIndex(s.S)] }; }), '\u03B3', 25, 0, gamma);
-    sweepParam(makeFn(t => { const h = 0.5 + t * 11.5; const s = computeJonswap(h, Tp, gamma); return { x: h, y: s.S[peakIndex(s.S)] }; }), 'H\u209B (m)', 25, 1, Hm0);
-    sweepParam(makeFn(t => { const tp = 3 + t * 22; const s = computeJonswap(Hm0, tp, gamma); return { x: tp, y: s.S[peakIndex(s.S)] }; }), 'T\u209A (s)', 25, 2, Tp);
-  } else if (type === 'pm-generalized') {
-    const Hm0 = parseFloat(document.getElementById('gHm0Slider').value);
-    const Tp = parseFloat(document.getElementById('gTpSlider').value);
-    document.getElementById('sensTitle0').textContent = 'H\u209B (Wave Height)';
-    document.getElementById('sensTitle1').textContent = 'T\u209A (Peak Period)';
-    document.getElementById('sensTitle2').textContent = 'γ fixed at 1';
-    sweepParam(makeFn(t => { const h = 0.5 + t * 11.5; const s = computePMGeneralized(h, Tp); return { x: h, y: s.S[peakIndex(s.S)] }; }), 'H\u209B (m)', 25, 0, Hm0);
-    sweepParam(makeFn(t => { const tp = 3 + t * 22; const s = computePMGeneralized(Hm0, tp); return { x: tp, y: s.S[peakIndex(s.S)] }; }), 'T\u209A (s)', 25, 1, Tp);
-    clearSensPanel(2, 'Not applicable (PM shape)');
-  } else if (type === 'pm-ittc') {
-    const Hs = parseFloat(document.getElementById('iHsSlider').value);
-    const Tz = parseFloat(document.getElementById('iTzSlider').value);
-    document.getElementById('sensTitle0').textContent = 'H\u209B (Wave Height)';
-    document.getElementById('sensTitle1').textContent = 'T\u2092 (Zero-Crossing)';
-    document.getElementById('sensTitle2').textContent = 'γ fixed (PM shape)';
-    sweepParam(makeFn(t => { const h = 0.5 + t * 11.5; const s = computePM_ITTC(h, Tz); return { x: h, y: s.S[peakIndex(s.S)] }; }), 'H\u209B (m)', 25, 0, Hs);
-    sweepParam(makeFn(t => { const tz = 2 + t * 18; const s = computePM_ITTC(Hs, tz); return { x: tz, y: s.S[peakIndex(s.S)] }; }), 'T\u2092 (s)', 25, 1, Tz);
-    clearSensPanel(2, 'Fixed PM spectral shape');
-  } else if (type === 'ochi-hubble') {
-    const osH = parseFloat(document.getElementById('osHm0Slider').value);
-    const osT = parseFloat(document.getElementById('osTpSlider').value);
-    const osL = parseFloat(document.getElementById('osLambdaSlider').value);
-    const owH = parseFloat(document.getElementById('owHm0Slider').value);
-    const owT = parseFloat(document.getElementById('owTpSlider').value);
-    const owL = parseFloat(document.getElementById('owLambdaSlider').value);
-    const totalH = Math.sqrt(osH * osH + owH * owH);
-    document.getElementById('sensTitle0').textContent = '\u03BB Swell';
-    document.getElementById('sensTitle1').textContent = '\u03BB Sea';
-    document.getElementById('sensTitle2').textContent = 'Total H\u209B';
-    sweepParam(makeFn(t => { const lam = 0.05 + t * 0.95; const s = computeOchiHubble(osH, osT, lam, owH, owT, owL); return { x: lam, y: s.S[peakIndex(s.S)] }; }), '\u03BB_swell', 20, 0, osL);
-    sweepParam(makeFn(t => { const lam = 0.05 + t * 0.95; const s = computeOchiHubble(osH, osT, osL, owH, owT, lam); return { x: lam, y: s.S[peakIndex(s.S)] }; }), '\u03BB_sea', 20, 1, owL);
-    sweepParam(makeFn(t => { const tot = 0.2 + t * 11; const ratio = owH / Math.max(osH + owH, 0.01); const hS = Math.sqrt((1 - ratio) * tot * tot); const hW = Math.sqrt(ratio * tot * tot); const s = computeOchiHubble(hS, osT, osL, hW, owT, owL); return { x: tot, y: s.S[peakIndex(s.S)] }; }), 'H\u209B_tot (m)', 20, 2, totalH);
-  } else if (type === 'tma') {
-    const Hm0 = parseFloat(document.getElementById('tHm0Slider').value);
-    const Tp = parseFloat(document.getElementById('tTpSlider').value);
-    const gamma = parseFloat(document.getElementById('tGammaSlider').value);
-    const depth = parseFloat(document.getElementById('depthSlider').value);
-    document.getElementById('sensTitle0').textContent = '\u03B3 (Peakedness)';
-    document.getElementById('sensTitle1').textContent = 'Depth';
-    document.getElementById('sensTitle2').textContent = 'H\u209B (Wave Height)';
-    sweepParam(makeFn(t => { const g = 1 + t * 49; const s = computeTMA(Hm0, Tp, g, depth); return { x: g, y: s.S[peakIndex(s.S)] }; }), '\u03B3', 25, 0, gamma);
-    sweepParam(makeFn(t => { const d = 5 + t * 195; const s = computeTMA(Hm0, Tp, gamma, d); return { x: d, y: s.S[peakIndex(s.S)] }; }), 'Depth (m)', 25, 1, depth);
-    sweepParam(makeFn(t => { const h = 0.5 + t * 11.5; const s = computeTMA(h, Tp, gamma, depth); return { x: h, y: s.S[peakIndex(s.S)] }; }), 'H\u209B (m)', 25, 2, Hm0);
-  } else if (type === 'white-noise') {
-    const Hs = parseFloat(document.getElementById('wHsSlider').value);
-    const fmin = parseFloat(document.getElementById('wFminSlider').value);
-    const fmax = parseFloat(document.getElementById('wFmaxSlider').value);
-    document.getElementById('sensTitle0').textContent = 'Hs (Wave Height)';
-    document.getElementById('sensTitle1').textContent = 'fmin (Min Frequency)';
-    document.getElementById('sensTitle2').textContent = 'fmax (Max Frequency)';
-    sweepParam(makeFn(t => { const h = 0.5 + t * 11.5; const s = computeWhiteNoise(h, fmin, fmax); return { x: h, y: s.S[peakIndex(s.S)] }; }), 'Hs (m)', 25, 0, Hs);
-    sweepParam(makeFn(t => { const fm = 0.01 + t * 0.49; const s = computeWhiteNoise(Hs, fm, fmax); return { x: fm, y: s.S[peakIndex(s.S)] }; }), 'fmin (Hz)', 25, 1, fmin);
-    sweepParam(makeFn(t => { const fm = 0.1 + t * 4.9; const s = computeWhiteNoise(Hs, fmin, fm); return { x: fm, y: s.S[peakIndex(s.S)] }; }), 'fmax (Hz)', 25, 2, fmax);
-  } else if (type === 'regular-wave') {
-    const H = parseFloat(document.getElementById('rHSlider').value);
-    const T = parseFloat(document.getElementById('rTSlider').value);
-    document.getElementById('sensTitle0').textContent = 'Wave Height H';
-    document.getElementById('sensTitle1').textContent = 'Wave Period T';
-    document.getElementById('sensTitle2').textContent = 'Monochromatic';
-    sweepParam(makeFn(t => { const h = 0.1 + t * 9.9; const s = computeRegularWave(h, T); return { x: h, y: s.S[peakIndex(s.S)] }; }), 'H (m)', 25, 0, H);
-    sweepParam(makeFn(t => { const tp = 3 + t * 22; const s = computeRegularWave(H, tp); return { x: tp, y: s.S[peakIndex(s.S)] }; }), 'T (s)', 25, 1, T);
-    clearSensPanel(2, 'Single-frequency wave');
-  }
 }
 
 function generateReport() {
@@ -1242,20 +978,6 @@ function generateReport() {
     html += '<tr><td>Tp</td><td>' + gT(Tp) + '</td><td>Peak spectral period</td></tr>';
     html += '<tr><td>\u03B3</td><td>' + gamma.toFixed(2) + '</td><td>Peakedness parameter</td></tr>';
     html += '<tr><td>Depth</td><td>' + depth.toFixed(0) + ' m</td><td>Water depth</td></tr>';
-  } else if (type === 'white-noise') {
-    const Hs = parseFloat(document.getElementById('wHsSlider').value);
-    const fmin = parseFloat(document.getElementById('wFminSlider').value);
-    const fmax = parseFloat(document.getElementById('wFmaxSlider').value);
-    html += '<tr><td>Model</td><td>White Noise</td><td>Flat spectral density</td></tr>';
-    html += '<tr><td>Hs</td><td>' + gHs(Hs) + '</td><td>Significant wave height</td></tr>';
-    html += '<tr><td>fmin</td><td>' + fmin.toFixed(2) + ' Hz</td><td>Lower frequency bound</td></tr>';
-    html += '<tr><td>fmax</td><td>' + fmax.toFixed(2) + ' Hz</td><td>Upper frequency bound</td></tr>';
-  } else if (type === 'regular-wave') {
-    const H = parseFloat(document.getElementById('rHSlider').value);
-    const T = parseFloat(document.getElementById('rTSlider').value);
-    html += '<tr><td>Model</td><td>Regular Wave</td><td>Monochromatic (narrow Gaussian spike)</td></tr>';
-    html += '<tr><td>H</td><td>' + H.toFixed(1) + ' m</td><td>Wave height (trough to crest)</td></tr>';
-    html += '<tr><td>T</td><td>' + gT(T) + '</td><td>Wave period</td></tr>';
   }
 
   html += '<h3>2. Spectral Parameters</h3>';
@@ -1282,10 +1004,6 @@ function generateReport() {
     const t = Math.sqrt(osH * osH + owH * owH);
     html += '<tr><td>Swell fraction</td><td>' + (osH * osH / (t * t) * 100).toFixed(1) + '%</td><td>Energy in swell component</td></tr>';
   }
-  if (type === 'white-noise') {
-    html += '<tr><td>S(f) value</td><td>' + res.S[0].toFixed(4) + ' m\u00B2/Hz</td><td>Constant spectral density</td></tr>';
-  }
-
   html += '</table>';
 
   html += '<h3>3. Engineering Summary</h3>';
@@ -1303,10 +1021,8 @@ function generateReport() {
     html += 'Bimodal seas can excite two distinct structural resonances. Fatigue assessment should account for the combined energy distribution. The swell component often carries energy at periods longer than the first structural mode, while the wind-sea component may excite higher modes. The \u03BB (shape) parameter controls the spectral width of each log-normal component: smaller \u03BB gives a narrower, more peaked spectrum; larger \u03BB produces a broader, flatter shape.';
   } else if (type === 'tma') {
     html += 'In finite depth, the high-frequency tail is suppressed by the TMA depth factor. This reduces spectral density at frequencies above the peak, decreasing fatigue damage rates for structures with high natural frequencies (e.g., wind turbine blades, deck equipment).';
-  } else if (type === 'white-noise') {
-    html += 'White noise distributes energy uniformly across the frequency band. It is a theoretical construct useful for: (a) transfer function identification, (b) benchmarking response models, (c) conservative broadband excitation in fatigue screening. Not physically realistic for ocean waves.';
-  } else if (type === 'regular-wave') {
-    html += 'A regular (monochromatic) wave concentrates all energy at a single frequency. This is the simplest wave model, used for: (a) deterministic design wave analysis, (b) fatigue damage equivalent wave methods, (c) hydrodynamic coefficient calibration. In reality, ocean waves are random and broadband.';
+  } else if (type === 'custom') {
+    html += 'User-selected spectrum loaded from file or text input. The data is used directly as the spectral density function S(f).';
   }
 
   html += '</div>';
@@ -1345,8 +1061,8 @@ function generateReport() {
     html += '<h3>4. Custom Spectrum Agreement</h3>';
     html += '<p style="font-size:0.82rem;color:#5a6a7a;">Each model evaluated at its current slider parameters against the user-defined custom spectrum. Lower composite score = better agreement.</p>';
     html += '<table><tr><th>Rank</th><th>Model</th><th>r (correlation)</th><th>RMSE (m\u00B2/Hz)</th><th>KS statistic</th><th>Composite</th></tr>';
-    const modelIds = ['jonswap', 'pm-generalized', 'pm-ittc', 'ochi-hubble', 'tma', 'white-noise', 'regular-wave'];
-    const modelNames = ['JONSWAP', 'PM Generalized', 'PM ITTC', 'Ochi-Hubble', 'TMA', 'White Noise', 'Regular Wave'];
+    const modelIds = ['jonswap', 'pm-generalized', 'pm-ittc', 'ochi-hubble', 'tma'];
+    const modelNames = ['JONSWAP', 'PM Generalized', 'PM ITTC', 'Ochi-Hubble', 'TMA'];
     const results = [];
     for (let mi = 0; mi < modelIds.length; mi++) {
       const mId = modelIds[mi];
@@ -1426,33 +1142,13 @@ setupControl('depthSlider', 'depthVal', () => {
   document.getElementById('depthDesc').textContent = d < 25 ? 'Very shallow — strong HF suppression' : d < 60 ? 'Shallow — moderate modification' : d < 120 ? 'Intermediate — mild effect' : 'Deep water — near JONSWAP';
   updateAll();
 });
-setupControl('wHsSlider', 'wHsVal', updateAll);
-setupControl('wFminSlider', 'wFminVal', updateAll);
-setupControl('wFmaxSlider', 'wFmaxVal', updateAll);
-setupControl('rHSlider', 'rHVal', updateAll);
-setupControl('rTSlider', 'rTVal', updateAll);
-setupControl('customDfSlider', 'customDfVal', () => {});
-
-function onCustomToggle() {
-  document.getElementById('customInputPanel').style.display =
-    document.getElementById('customToggle').checked ? 'block' : 'none';
-}
-
-function onCustomModeChange() {
-  const mode = document.getElementById('customMode').value;
-  document.getElementById('customStepPanel').style.display = mode === 'step' ? 'block' : 'none';
-  document.getElementById('customPairsPanel').style.display = mode === 'pairs' ? 'block' : 'none';
-}
 
 function loadCustomSpectrum() {
   const status = document.getElementById('customStatus');
   try {
-    const mode = document.getElementById('customMode').value;
-    const parsed = parseCustomInput(mode);
+    const parsed = parseCustomInput();
     customSpectrum = { f: parsed.f, S: parsed.S };
-    document.getElementById('customToggle').checked = true;
-    document.getElementById('customInputPanel').style.display = 'block';
-    status.textContent = 'Loaded: ' + parsed.f.length + ' points, f range [' + parsed.f[0].toFixed(3) + ' \u2013 ' + parsed.f[parsed.f.length - 1].toFixed(3) + '] Hz, max S = ' + parsed.S[peakIndex(parsed.S)].toFixed(2) + ' m\u00B2/Hz';
+    status.textContent = 'Loaded: ' + parsed.f.length + ' points, f range [' + parsed.f[0].toFixed(3) + ' – ' + parsed.f[parsed.f.length - 1].toFixed(3) + '] Hz, max S = ' + parsed.S[peakIndex(parsed.S)].toFixed(2) + ' m²/Hz';
     status.style.color = '#2e7d32';
     updateAll();
   } catch (e) {
@@ -1463,11 +1159,11 @@ function loadCustomSpectrum() {
 
 function clearCustomSpectrum() {
   customSpectrum = null;
-  document.getElementById('customToggle').checked = false;
-  document.getElementById('customInputPanel').style.display = 'none';
+  document.getElementById('customInputPanel').style.display = 'block';
   document.getElementById('customStatus').textContent = '';
   document.getElementById('customFileName').textContent = '';
   document.getElementById('customFileInput').value = '';
+  document.getElementById('customPairsText').value = '';
   updateAll();
 }
 
@@ -1477,29 +1173,13 @@ function onCustomFileUpload(event) {
   document.getElementById('customFileName').textContent = file.name;
   const reader = new FileReader();
   reader.onload = function(e) {
-    const text = e.target.result;
-    const mode = document.getElementById('customMode').value;
-    const pairsPanel = document.getElementById('customPairsPanel');
-    const stepPanel = document.getElementById('customStepPanel');
-    if (mode === 'pairs' || text.includes('\t') || (text.split('\n')[0].split(/[,\s]+/).length >= 2 && text.split('\n')[0].split(/[,\s]+/).filter(v => v.trim()).length === 2)) {
-      document.getElementById('customMode').value = 'pairs';
-      onCustomModeChange();
-      document.getElementById('customPairsText').value = text;
-    } else {
-      document.getElementById('customMode').value = 'step';
-      onCustomModeChange();
-      document.getElementById('customStepText').value = text;
-    }
+    document.getElementById('customPairsText').value = e.target.result;
     loadCustomSpectrum();
   };
   reader.readAsText(file);
 }
 
 function loadExampleSpectrum() {
-  document.getElementById('customToggle').checked = true;
-  document.getElementById('customInputPanel').style.display = 'block';
-  document.getElementById('customMode').value = 'pairs';
-  onCustomModeChange();
   document.getElementById('customPairsText').value =
     '0.040 0.02\n0.050 0.08\n0.055 0.15\n0.060 0.35\n0.065 0.65\n0.070 1.10\n0.075 1.60\n0.080 2.00\n0.085 2.25\n0.090 2.35\n0.095 2.30\n0.100 2.15\n0.110 1.70\n0.120 1.20\n0.130 0.85\n0.140 0.60\n0.150 0.45\n0.160 0.35\n0.180 0.22\n0.200 0.15\n0.250 0.07\n0.300 0.03\n0.400 0.01\n0.500 0.005';
   document.getElementById('customStatus').textContent = '';
@@ -1515,15 +1195,13 @@ function onTDToggle() {
 
 let tdTimer = null;
 
-function computeTimeSeries(f, S, duration, seed) {
-  const nPoints = 2000;
-  const dt = duration / nPoints;
+function computeTimeSeries(f, S, duration, dt) {
+  const nPoints = Math.floor(duration / dt);
   const t = new Float64Array(nPoints);
   const eta = new Float64Array(nPoints);
   for (let i = 0; i < nPoints; i++) t[i] = i * dt;
 
-  // Seeded RNG
-  let s = seed || Math.floor(Math.random() * 1000);
+  let s = 0;
   function seededRand() { s = (s * 1664525 + 1013904223) & 0xffffffff; return s / 0x100000000; }
 
   const nComp = 500;
@@ -1564,18 +1242,16 @@ let lastTimeSeries = null;
 function generateTimeSeries() {
   const res = computeCurrent();
   const duration = parseFloat(document.getElementById('tdDurSlider').value);
-  const seed = parseFloat(document.getElementById('tdSeedSlider').value);
-  const td = computeTimeSeries(res.f, res.S, duration, seed);
+  const dt = parseFloat(document.getElementById('tdDtSlider').value);
+  const td = computeTimeSeries(res.f, res.S, duration, dt);
   lastTimeSeries = td;
-  // Clear stale FFT overlay
-  if (document.getElementById('fftOverlayToggle').checked) {
-    document.getElementById('fftOverlayToggle').checked = false;
-    fftSpectrum = null;
-    document.getElementById('fftStatus').textContent = '';
-  }
-  plotTimeSeries(td);
+  fftSpectrum = null;
+  document.getElementById('fftSmoothPanel').style.display = 'none';
+  document.getElementById('fftParamsStrip').style.display = 'none';
+  document.getElementById('fftStatus').textContent = '';
   document.getElementById('tdSection').style.display = 'block';
-  document.getElementById('tdStatus').textContent = 'Points: ' + td.nPoints + ' | dt: ' + (td.dt * 1000).toFixed(1) + ' ms | Duration: ' + duration + ' s | Seed: ' + seed;
+  plotTimeSeries(td);
+  document.getElementById('tdStatus').textContent = 'Points: ' + td.nPoints + ' | dt: ' + (td.dt * 1000).toFixed(1) + ' ms | Duration: ' + duration + ' s';
 }
 
 function downloadTimeSeries() {
@@ -1673,7 +1349,8 @@ function onFFTOverlayToggle() {
   const fftStrip = document.getElementById('fftParamsStrip');
   if (checked) {
     if (!lastTimeSeries) {
-      status.textContent = 'Generate a time series first.';
+      status.textContent = 'Upload a time-series CSV to enable.';
+      document.getElementById('tdFileInput').click();
       document.getElementById('fftOverlayToggle').checked = false;
       return;
     }
@@ -1692,7 +1369,6 @@ function onFFTOverlayToggle() {
 function onTDFileUpload(event) {
   const file = event.target.files[0];
   if (!file) return;
-  document.getElementById('tdFileName').textContent = file.name;
   const reader = new FileReader();
   reader.onload = function(e) {
     const text = e.target.result;
@@ -1719,24 +1395,17 @@ function onTDFileUpload(event) {
       if (Math.abs(t[i] - t[i - 1] - dt) > dt * 0.01) { document.getElementById('fftStatus').textContent = 'Error: time steps must be uniform'; return; }
     }
     lastTimeSeries = { t, eta, nPoints: n, dt };
-    document.getElementById('tdToggle').checked = true;
-    onTDToggle();
-    plotTimeSeries(lastTimeSeries);
-    document.getElementById('tdSection').style.display = 'block';
-    document.getElementById('tdStatus').textContent = 'Uploaded: ' + n + ' pts, dt=' + (dt * 1000).toFixed(1) + ' ms, duration=' + (t[n - 1] - t[0]).toFixed(0) + ' s';
-    // Clear stale FFT overlay
-    document.getElementById('fftOverlayToggle').checked = false;
-    fftSpectrum = null;
-    document.getElementById('fftStatus').textContent = 'Ready — check "Overlay FFT" above to compute spectrum.';
-    document.getElementById('fftStatus').style.color = '#2e7d32';
+    document.getElementById('fftSmoothPanel').style.display = 'block';
+    document.getElementById('fftParamsStrip').style.display = '';
+    applyFFTWithSmoothing();
   };
   reader.readAsText(file);
 }
 
 setupControl('tdDurSlider', 'tdDurVal', () => {});
-setupControl('tdSeedSlider', 'tdSeedVal', () => {});
+setupControl('tdDtSlider', 'tdDtVal', () => {});
 setupControl('fftSmoothSlider', 'fftSmoothVal', () => {
-  if (document.getElementById('fftOverlayToggle').checked) applyFFTWithSmoothing();
+  if (lastTimeSeries) applyFFTWithSmoothing();
 });
 
 let raoCustom = null;
@@ -1855,10 +1524,49 @@ function toggleReport() {
 function downloadCSV() {
   const type = document.getElementById('spectrumType').value;
   const res = computeCurrent();
-  const header = 'f (Hz),S(f) (m^2/Hz)\n';
+  const fRef = res.f;
+  const N = fRef.length;
+
+  const columns = [];
+  const colNames = [];
+
+  const modelLabel = {
+    'jonswap': 'JONSWAP \u03B3=' + parseFloat(document.getElementById('gammaSlider').value).toFixed(2),
+    'pm-generalized': 'PM Generalized',
+    'pm-ittc': 'PM ITTC',
+    'ochi-hubble': 'Ochi-Hubble',
+    'tma': 'TMA (depth=' + parseFloat(document.getElementById('depthSlider').value) + ' m)',
+    'custom': 'User-selected spectrum'
+  };
+  colNames.push(modelLabel[type] || type);
+  columns.push(res.S);
+
+  const compModels = ['jonswap','pm-generalized','pm-ittc','ochi-hubble','tma','custom'];
+  const compNames = ['JONSWAP','PM Generalized','PM ITTC','Ochi-Hubble','TMA','User-selected'];
+  document.querySelectorAll('.compare-cb:checked').forEach(cb => {
+    const mi = compModels.indexOf(cb.value);
+    if (mi < 0 || cb.value === type) return;
+    const oldType = document.getElementById('spectrumType').value;
+    document.getElementById('spectrumType').value = cb.value;
+    const mRes = computeCurrent();
+    document.getElementById('spectrumType').value = oldType;
+    columns.push(interp1d(fRef, mRes.f, mRes.S));
+    colNames.push(compNames[mi]);
+  });
+
+  if (fftSpectrum) {
+    columns.push(interp1d(fRef, fftSpectrum.f, fftSpectrum.S));
+    colNames.push('From time-series CSV');
+  }
+
+  const header = 'f (Hz),' + colNames.join(',') + '\n';
   const rows = [];
-  for (let i = 0; i < res.f.length; i++) {
-    rows.push(res.f[i].toFixed(6) + ',' + res.S[i].toFixed(6));
+  for (let i = 0; i < N; i++) {
+    const vals = [fRef[i].toFixed(6)];
+    for (let j = 0; j < columns.length; j++) {
+      vals.push(columns[j][i].toFixed(6));
+    }
+    rows.push(vals.join(','));
   }
   const csv = header + rows.join('\n');
   const blob = new Blob([csv], { type: 'text/csv' });
@@ -1870,7 +1578,7 @@ function downloadCSV() {
 }
 
 function saveConfig() {
-  const sliderIds = ['hm0Slider','tpSlider','gammaSlider','gHm0Slider','gTpSlider','iHsSlider','iTzSlider','osHm0Slider','osTpSlider','osLambdaSlider','owHm0Slider','owTpSlider','owLambdaSlider','tHm0Slider','tTpSlider','tGammaSlider','depthSlider','wHsSlider','wFminSlider','wFmaxSlider','rHSlider','rTSlider','raoFnSlider','raoZetaSlider','tdDurSlider','tdSeedSlider','fftSmoothSlider'];
+  const sliderIds = ['hm0Slider','tpSlider','gammaSlider','gHm0Slider','gTpSlider','iHsSlider','iTzSlider','osHm0Slider','osTpSlider','osLambdaSlider','owHm0Slider','owTpSlider','owLambdaSlider','tHm0Slider','tTpSlider','tGammaSlider','depthSlider','raoFnSlider','raoZetaSlider','tdDurSlider','tdDtSlider','fftSmoothSlider'];
   const state = { sliders: {}, type: document.getElementById('spectrumType').value };
   for (const id of sliderIds) {
     const el = document.getElementById(id);
@@ -1878,8 +1586,6 @@ function saveConfig() {
   }
   const tdToggle = document.getElementById('tdToggle');
   state.tdEnabled = tdToggle ? tdToggle.checked : false;
-  const fftToggle = document.getElementById('fftOverlayToggle');
-  state.fftEnabled = fftToggle ? fftToggle.checked : false;
   localStorage.setItem('spectrumSimConfig', JSON.stringify(state));
   const status = document.getElementById('configStatus');
   status.textContent = 'Saved!';
@@ -1903,13 +1609,7 @@ function loadConfig() {
     if (state.tdEnabled) {
       const tdToggle = document.getElementById('tdToggle');
       if (tdToggle) { tdToggle.checked = true; onTDToggle(); }
-      setTimeout(() => {
-        generateTimeSeries();
-        if (state.fftEnabled) {
-          document.getElementById('fftOverlayToggle').checked = true;
-          onFFTOverlayToggle();
-        }
-      }, 100);
+      setTimeout(() => generateTimeSeries(), 100);
     }
     status.textContent = 'Config loaded!';
     setTimeout(() => status.textContent = '', 1500);
@@ -1919,7 +1619,7 @@ function loadConfig() {
 }
 
 function addNumberInputs() {
-  const sliderIds = ['hm0Slider','tpSlider','gammaSlider','gHm0Slider','gTpSlider','iHsSlider','iTzSlider','osHm0Slider','osTpSlider','osLambdaSlider','owHm0Slider','owTpSlider','owLambdaSlider','tHm0Slider','tTpSlider','tGammaSlider','depthSlider','wHsSlider','wFminSlider','wFmaxSlider','rHSlider','rTSlider','raoFnSlider','raoZetaSlider','tdDurSlider','tdSeedSlider','fftSmoothSlider'];
+  const sliderIds = ['hm0Slider','tpSlider','gammaSlider','gHm0Slider','gTpSlider','iHsSlider','iTzSlider','osHm0Slider','osTpSlider','osLambdaSlider','owHm0Slider','owTpSlider','owLambdaSlider','tHm0Slider','tTpSlider','tGammaSlider','depthSlider','raoFnSlider','raoZetaSlider','tdDurSlider','tdDtSlider','fftSmoothSlider'];
   for (const id of sliderIds) {
     const slider = document.getElementById(id);
     if (!slider) continue;
@@ -1960,8 +1660,7 @@ document.querySelectorAll('input[type="range"]').forEach(sl => {
   setRangeStyle(sl, parseFloat(sl.min), parseFloat(sl.max));
 });
 
-updateAll();
-onCustomModeChange();
+onTypeChange();
 onRaoTypeChange();
 addNumberInputs();
 </script>

@@ -891,7 +891,7 @@
                     cursor: pointer;
                   "
                 >
-                  Upload user-selected CSV
+                  Upload user spectrum CSV
                 </button>
                 <span
                   id="customFileName"
@@ -1007,18 +1007,33 @@
                 </div>
               </div>
               <div class="control-group">
-                <label>Ramp duration (s)
+                <label>Ramp-up duration (s)
                   <span class="val" id="tdRampVal">0 s</span></label>
                 <input
                   type="range"
                   id="tdRampSlider"
                   min="0"
-                  max="60"
+                  max="120"
                   step="1"
                   value="0"
                 />
                 <div class="range-labels">
-                  <span>0 s (none)</span><span>60 s</span>
+                  <span>0 s (none)</span><span>120 s</span>
+                </div>
+              </div>
+              <div class="control-group">
+                <label>Ramp-down duration (s)
+                  <span class="val" id="tdRampDownVal">0 s</span></label>
+                <input
+                  type="range"
+                  id="tdRampDownSlider"
+                  min="0"
+                  max="120"
+                  step="1"
+                  value="0"
+                />
+                <div class="range-labels">
+                  <span>0 s (none)</span><span>120 s</span>
                 </div>
               </div>
               <button
@@ -2524,7 +2539,7 @@
 
       let tdTimer = null;
 
-      function computeTimeSeries(f, S, duration, dt, rampDuration) {
+      function computeTimeSeries(f, S, duration, dt, rampDuration, rampDownDuration) {
         const nPoints = Math.floor(duration / dt);
         const t = new Float64Array(nPoints);
         const eta = new Float64Array(nPoints);
@@ -2555,6 +2570,15 @@
           for (let i = 0; i < nPoints && t[i] < rampDuration; i++) {
             const r = t[i] / rampDuration;
             eta[i] *= 0.5 * (1 - Math.cos(Math.PI * r));
+          }
+        }
+        if (rampDownDuration > 0) {
+          const rampStart = duration - rampDownDuration;
+          for (let i = 0; i < nPoints && t[i] < duration; i++) {
+            if (t[i] >= rampStart) {
+              const r = (duration - t[i]) / rampDownDuration;
+              eta[i] *= 0.5 * (1 - Math.cos(Math.PI * r));
+            }
           }
         }
 
@@ -2605,7 +2629,8 @@
         );
         const dt = parseFloat(document.getElementById("tdDtSlider").value);
         const rampDuration = parseFloat(document.getElementById("tdRampSlider").value);
-        const td = computeTimeSeries(res.f, res.S, duration, dt, rampDuration);
+        const rampDownDuration = parseFloat(document.getElementById("tdRampDownSlider").value);
+        const td = computeTimeSeries(res.f, res.S, duration, dt, rampDuration, rampDownDuration);
         lastTimeSeries = td;
         lastTimeSeries.type = document.getElementById('spectrumType').value;
         lastTimeSeries.duration = duration;
@@ -2639,7 +2664,8 @@
           " ms | Duration: " +
           duration +
           " s" +
-          (rampDuration > 0 ? " | Ramp: " + rampDuration + " s" : "");
+          (rampDuration > 0 ? " | Ramp: " + rampDuration + " s" : "") +
+          (rampDownDuration > 0 ? " | Ramp-down: " + rampDownDuration + " s" : "");
       }
 
       function downloadTimeSeries() {
@@ -2844,6 +2870,7 @@
       setupControl("tdDurSlider", "tdDurVal", () => {});
       setupControl("tdDtSlider", "tdDtVal", () => {});
       setupControl("tdRampSlider", "tdRampVal", () => {});
+      setupControl("tdRampDownSlider", "tdRampDownVal", () => {});
       setupControl("fftSmoothSlider", "fftSmoothVal", () => {
         if (lastTimeSeries) applyFFTWithSmoothing();
       });
@@ -3002,6 +3029,7 @@
           "tdDurSlider",
           "tdDtSlider",
           "tdRampSlider",
+          "tdRampDownSlider",
           "fftSmoothSlider",
         ];
         const state = {
@@ -3078,6 +3106,7 @@
           "tdDurSlider",
           "tdDtSlider",
           "tdRampSlider",
+          "tdRampDownSlider",
           "fftSmoothSlider",
         ];
         for (const id of sliderIds) {

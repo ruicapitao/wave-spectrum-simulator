@@ -1006,6 +1006,21 @@
                   <span>0.01 s</span><span>1.0 s</span>
                 </div>
               </div>
+              <div class="control-group">
+                <label>Ramp duration (s)
+                  <span class="val" id="tdRampVal">0 s</span></label>
+                <input
+                  type="range"
+                  id="tdRampSlider"
+                  min="0"
+                  max="60"
+                  step="1"
+                  value="0"
+                />
+                <div class="range-labels">
+                  <span>0 s (none)</span><span>60 s</span>
+                </div>
+              </div>
               <button
                 onclick="generateTimeSeries()"
                 style="
@@ -2509,7 +2524,7 @@
 
       let tdTimer = null;
 
-      function computeTimeSeries(f, S, duration, dt) {
+      function computeTimeSeries(f, S, duration, dt, rampDuration) {
         const nPoints = Math.floor(duration / dt);
         const t = new Float64Array(nPoints);
         const eta = new Float64Array(nPoints);
@@ -2535,6 +2550,14 @@
           for (let i = 0; i < nPoints; i++)
             eta[i] += ak * Math.cos(w * t[i] + phi);
         }
+
+        if (rampDuration > 0) {
+          for (let i = 0; i < nPoints && t[i] < rampDuration; i++) {
+            const r = t[i] / rampDuration;
+            eta[i] *= 0.5 * (1 - Math.cos(Math.PI * r));
+          }
+        }
+
         return { t, eta, nPoints, dt };
       }
 
@@ -2581,7 +2604,8 @@
           document.getElementById("tdDurSlider").value,
         );
         const dt = parseFloat(document.getElementById("tdDtSlider").value);
-        const td = computeTimeSeries(res.f, res.S, duration, dt);
+        const rampDuration = parseFloat(document.getElementById("tdRampSlider").value);
+        const td = computeTimeSeries(res.f, res.S, duration, dt, rampDuration);
         lastTimeSeries = td;
         lastTimeSeries.type = document.getElementById('spectrumType').value;
         lastTimeSeries.duration = duration;
@@ -2614,7 +2638,8 @@
           (td.dt * 1000).toFixed(1) +
           " ms | Duration: " +
           duration +
-          " s";
+          " s" +
+          (rampDuration > 0 ? " | Ramp: " + rampDuration + " s" : "");
       }
 
       function downloadTimeSeries() {
@@ -2818,6 +2843,7 @@
 
       setupControl("tdDurSlider", "tdDurVal", () => {});
       setupControl("tdDtSlider", "tdDtVal", () => {});
+      setupControl("tdRampSlider", "tdRampVal", () => {});
       setupControl("fftSmoothSlider", "fftSmoothVal", () => {
         if (lastTimeSeries) applyFFTWithSmoothing();
       });
@@ -2975,6 +3001,7 @@
           "depthSlider",
           "tdDurSlider",
           "tdDtSlider",
+          "tdRampSlider",
           "fftSmoothSlider",
         ];
         const state = {
@@ -3050,6 +3077,7 @@
           "depthSlider",
           "tdDurSlider",
           "tdDtSlider",
+          "tdRampSlider",
           "fftSmoothSlider",
         ];
         for (const id of sliderIds) {

@@ -342,9 +342,9 @@
       </header>
       <div class="main-layout">
         <div class="controls-panel">
-          <h3>Parameters</h3>
+          <h3>Available Spectral Models</h3>
           <div class="control-group">
-            <label>Spectrum Model</label>
+            <label>Empirical and user-defined</label>
             <select id="spectrumType" onchange="onTypeChange()">
               <option value="jonswap">JONSWAP (Hs, Tp, γ)</option>
               <option value="pm-generalized">PM Generalized (Hs, Tp)</option>
@@ -439,7 +439,7 @@
                   value="ochi-hubble"
                   onchange="updateAll()"
                 />
-                <span style="color: #9b59b6">●</span> Ochi-H.</label
+                <span style="color: #9b59b6">●</span> Ochi-Hubble</label
               >
               <label
                 style="
@@ -478,7 +478,7 @@
           <div id="grp_jonswap" class="ctrl-group active">
             <div class="control-group">
               <label
-                >Significant wave height, Hs (m)
+                >Sign. wave height, Hs (m)
                 <span class="val" id="hm0Val">2.50 m</span></label
               >
               <input
@@ -535,7 +535,7 @@
           <div id="grp_pm-generalized" class="ctrl-group">
             <div class="control-group">
               <label
-                >Significant wave height, Hs (m)
+                >Sign. wave height, Hs (m)
                 <span class="val" id="gHm0Val">2.50 m</span></label
               >
               <input
@@ -573,7 +573,7 @@
           <div id="grp_pm-ittc" class="ctrl-group">
             <div class="control-group">
               <label
-                >Significant wave height, Hs (m)
+                >Sign. wave height, Hs (m)
                 <span class="val" id="iHsVal">2.50 m</span></label
               >
               <input
@@ -610,7 +610,7 @@
             <div class="control-section-label">Swell component (low freq)</div>
             <div class="control-group">
               <label
-                >Significant wave height, Hm0 swell (m)
+                >Sign. wave height, Hm0 (m)
                 <span class="val" id="osHm0Val">1.20 m</span></label
               >
               <input
@@ -625,7 +625,7 @@
             </div>
             <div class="control-group">
               <label
-                >Peak period, Tp swell (s)
+                >Peak period, Tp (s)
                 <span class="val" id="osTpVal">14.0 s</span></label
               >
               <input
@@ -640,7 +640,7 @@
             </div>
             <div class="control-group">
               <label
-                >Spectral width, λ swell
+                >Spectral width, λ
                 <span class="val" id="osLambdaVal">0.30</span></label
               >
               <input
@@ -660,7 +660,7 @@
             </div>
             <div class="control-group">
               <label
-                >Significant wave height, Hm0 sea (m)
+                >Sign. wave height, Hm0 (m)
                 <span class="val" id="owHm0Val">2.00 m</span></label
               >
               <input
@@ -675,7 +675,7 @@
             </div>
             <div class="control-group">
               <label
-                >Peak period, Tp sea (s)
+                >Peak period, Tp (s)
                 <span class="val" id="owTpVal">6.0 s</span></label
               >
               <input
@@ -690,7 +690,7 @@
             </div>
             <div class="control-group">
               <label
-                >Spectral width, λ sea
+                >Spectral width, λ
                 <span class="val" id="owLambdaVal">0.40</span></label
               >
               <input
@@ -714,7 +714,7 @@
           <div id="grp_tma" class="ctrl-group">
             <div class="control-group">
               <label
-                >Significant wave height, Hs (m)
+                >Sign. wave height, Hs (m)
                 <span class="val" id="tHm0Val">2.50 m</span></label
               >
               <input
@@ -1030,119 +1030,6 @@
               />
             </div>
           </div>
-
-          <div
-            id="grp_rao"
-            class="custom-group"
-            style="
-              border-top: 2px solid #e8ecf0;
-              padding-top: 8px;
-              margin-top: 8px;
-            "
-          >
-            <div class="control-section-label">RAO / Response</div>
-            <div class="control-group">
-              <label
-                ><input
-                  type="checkbox"
-                  id="raoToggle"
-                  onchange="onRaoToggle()"
-                />
-                Enable RAO</label
-              >
-            </div>
-            <div id="raoPanel" style="display: none">
-              <div class="control-group">
-                <label>RAO type</label>
-                <select id="raoType" onchange="onRaoTypeChange()">
-                  <option value="dof">Single-DOF oscillator</option>
-                  <option value="custom">Custom RAO pairs</option>
-                </select>
-              </div>
-              <div id="raoDofPanel">
-                <div class="control-group">
-                  <label
-                    >Natural frequency, fn (Hz)
-                    <span class="val" id="raoFnVal">0.12 Hz</span></label
-                  >
-                  <input
-                    type="range"
-                    id="raoFnSlider"
-                    min="0.02"
-                    max="2.0"
-                    step="0.01"
-                    value="0.12"
-                  />
-                  <div class="range-labels">
-                    <span>0.02 Hz</span><span>2.0 Hz</span>
-                  </div>
-                </div>
-                <div class="control-group">
-                  <label
-                    >Damping ratio, ζ
-                    <span class="val" id="raoZetaVal">0.05</span></label
-                  >
-                  <input
-                    type="range"
-                    id="raoZetaSlider"
-                    min="0.01"
-                    max="0.50"
-                    step="0.01"
-                    value="0.05"
-                  />
-                  <div class="range-labels">
-                    <span>0.01</span><span>0.50</span>
-                  </div>
-                </div>
-              </div>
-              <div id="raoCustomPanel" style="display: none">
-                <div class="control-group">
-                  <label>f (Hz) and RAO |H(f)| — one pair per line</label>
-                  <textarea
-                    id="raoPairsText"
-                    rows="5"
-                    style="
-                      width: 100%;
-                      font-family: monospace;
-                      font-size: 0.8rem;
-                      padding: 6px;
-                      border: 1px solid #d0d8e0;
-                      border-radius: 4px;
-                      resize: vertical;
-                    "
-                    placeholder="0.04 0.1
-0.06 0.3
-0.08 0.6
-0.10 0.9
-0.12 1.0
-0.15 0.8
-0.20 0.4
-0.30 0.1"
-                  ></textarea>
-                </div>
-                <button
-                  onclick="loadRaoCustom()"
-                  style="
-                    width: 100%;
-                    padding: 6px;
-                    background: #0f3460;
-                    color: white;
-                    border: none;
-                    border-radius: 6px;
-                    font-weight: 600;
-                    cursor: pointer;
-                    font-size: 0.82rem;
-                  "
-                >
-                  Load RAO
-                </button>
-              </div>
-              <div
-                id="raoStatus"
-                style="font-size: 0.72rem; color: #5a6a7a; margin-top: 4px"
-              ></div>
-            </div>
-          </div>
           <div
             style="
               border-top: 2px solid #e8ecf0;
@@ -1198,16 +1085,6 @@
           <div class="label">Wave Power P (deep)</div>
           <div class="value" id="dispWavePower">
             — <span class="unit">kW/m</span>
-          </div>
-        </div>
-        <div class="param-card" id="cardRaoHm0" style="display: none">
-          <div class="label">Response Hs</div>
-          <div class="value" id="dispRaoHm0">— <span class="unit">m</span></div>
-        </div>
-        <div class="param-card" id="cardRaoPeak" style="display: none">
-          <div class="label">Response Peak S</div>
-          <div class="value" id="dispRaoPeak">
-            — <span class="unit">m²/Hz</span>
           </div>
         </div>
       </div>
@@ -2077,32 +1954,6 @@
           });
         });
 
-        const raoEnabled = document.getElementById("raoToggle").checked;
-        let raoRes = null;
-        if (raoEnabled) {
-          const H = computeRAO(res.f);
-          if (H) {
-            const Sresp = new Float64Array(res.f.length);
-            let maxR = 0;
-            for (let i = 0; i < res.f.length; i++) {
-              Sresp[i] = res.S[i] * H[i] * H[i];
-              if (Sresp[i] > maxR) maxR = Sresp[i];
-            }
-            raoRes = { f: res.f, S: Sresp, H };
-            if (maxR > 0) {
-              const dsRao = downsample(raoRes.f, raoRes.S, N_PLOT);
-              extraTraces.push({
-                x: Array.from(dsRao.f),
-                y: Array.from(dsRao.S),
-                type: "scatter",
-                mode: "lines",
-                name: "Response (RAO)",
-                line: { color: "#d32f2f", width: 2, dash: "dot" },
-              });
-            }
-          }
-        }
-
         const traces = [
           {
             x: Array.from(plotData.f),
@@ -2180,21 +2031,6 @@
           modeBarButtonsToRemove: ["sendDataToCloud", "lasso2d", "select2d"],
         });
 
-        if (raoEnabled && raoRes) {
-          const momR = spectralMoments(raoRes.f, raoRes.S);
-          const rHm0 = 4 * Math.sqrt(momR.m0);
-          const rPkIdx = peakIndex(raoRes.S);
-          const rPkS = raoRes.S[rPkIdx];
-          document.getElementById("cardRaoHm0").style.display = "";
-          document.getElementById("cardRaoPeak").style.display = "";
-          document.getElementById("dispRaoHm0").innerHTML =
-            rHm0.toFixed(3) + ' <span class="unit">m</span>';
-          document.getElementById("dispRaoPeak").innerHTML =
-            rPkS.toFixed(2) + ' <span class="unit">m\u00B2/Hz</span>';
-        } else {
-          document.getElementById("cardRaoHm0").style.display = "none";
-          document.getElementById("cardRaoPeak").style.display = "none";
-        }
       }
 
       function getPlotRangeFromResult(res) {
@@ -2456,59 +2292,6 @@
         }
 
         html += "</div>";
-
-        const raoEnabled = document.getElementById("raoToggle").checked;
-        if (raoEnabled) {
-          const H = computeRAO(res.f);
-          if (H) {
-            const Sresp = new Float64Array(res.f.length);
-            for (let i = 0; i < res.f.length; i++)
-              Sresp[i] = res.S[i] * H[i] * H[i];
-            const rMom = spectralMoments(res.f, Sresp);
-            const rHm0 = 4 * Math.sqrt(rMom.m0);
-            const rPkIdx = peakIndex(Sresp);
-            const rPkS = Sresp[rPkIdx];
-            html += "<h3>3b. RAO Response</h3>";
-            const raoType = document.getElementById("raoType").value;
-            if (raoType === "dof") {
-              const fn = document.getElementById("raoFnSlider").value;
-              const zeta = document.getElementById("raoZetaSlider").value;
-              html += "<table><tr><th>Parameter</th><th>Value</th></tr>";
-              html +=
-                "<tr><td>RAO type</td><td>Single-DOF (fn=" +
-                fn +
-                " Hz, \u03B6=" +
-                zeta +
-                ")</td></tr>";
-              html +=
-                "<tr><td>Response H<sub>s</sub></td><td>" +
-                rHm0.toFixed(3) +
-                " m</td></tr>";
-              html +=
-                "<tr><td>Response peak S</td><td>" +
-                rPkS.toFixed(3) +
-                " m\u00B2/Hz @ " +
-                res.f[rPkIdx].toFixed(3) +
-                " Hz</td></tr>";
-              html += "</table>";
-            } else {
-              html += "<table><tr><th>Parameter</th><th>Value</th></tr>";
-              html +=
-                "<tr><td>RAO type</td><td>Custom transfer function</td></tr>";
-              html +=
-                "<tr><td>Response H<sub>s</sub></td><td>" +
-                rHm0.toFixed(3) +
-                " m</td></tr>";
-              html +=
-                "<tr><td>Response peak S</td><td>" +
-                rPkS.toFixed(3) +
-                " m\u00B2/Hz @ " +
-                res.f[rPkIdx].toFixed(3) +
-                " Hz</td></tr>";
-              html += "</table>";
-            }
-          }
-        }
 
         if (customSpectrum) {
           html += "<h3>4. Custom Spectrum Agreement</h3>";
@@ -3039,102 +2822,6 @@
         if (lastTimeSeries) applyFFTWithSmoothing();
       });
 
-      let raoCustom = null;
-
-      function onRaoToggle() {
-        document.getElementById("raoPanel").style.display =
-          document.getElementById("raoToggle").checked ? "block" : "none";
-        if (!document.getElementById("raoToggle").checked) {
-          document.getElementById("cardRaoHm0").style.display = "none";
-          document.getElementById("cardRaoPeak").style.display = "none";
-        }
-        updateAll();
-      }
-
-      function onRaoTypeChange() {
-        const mode = document.getElementById("raoType").value;
-        document.getElementById("raoDofPanel").style.display =
-          mode === "dof" ? "block" : "none";
-        document.getElementById("raoCustomPanel").style.display =
-          mode === "custom" ? "block" : "none";
-      }
-
-      function computeRAO(fArr) {
-        const enabled = document.getElementById("raoToggle").checked;
-        if (!enabled) return null;
-        const mode = document.getElementById("raoType").value;
-        const n = fArr.length;
-        const H = new Float64Array(n);
-        if (mode === "dof") {
-          const fn = parseFloat(document.getElementById("raoFnSlider").value);
-          const zeta = parseFloat(
-            document.getElementById("raoZetaSlider").value,
-          );
-          for (let i = 0; i < n; i++) {
-            const r = fArr[i] / Math.max(fn, 1e-6);
-            const denom =
-              (1 - r * r) * (1 - r * r) + 2 * zeta * r * (2 * zeta * r);
-            H[i] = 1 / Math.sqrt(Math.max(denom, 1e-12));
-          }
-          return H;
-        } else if (mode === "custom") {
-          if (!raoCustom) return null;
-          for (let i = 0; i < n; i++) {
-            H[i] = interp1d(
-              new Float64Array([fArr[i]]),
-              raoCustom.f,
-              raoCustom.H,
-            )[0];
-            if (H[i] < 0) H[i] = 0;
-          }
-          return H;
-        }
-        return null;
-      }
-
-      function loadRaoCustom() {
-        const text = document.getElementById("raoPairsText").value.trim();
-        const status = document.getElementById("raoStatus");
-        try {
-          const lines = text.split("\n").filter((l) => l.trim());
-          if (lines.length < 2) throw new Error("Need at least 2 data pairs");
-          const n = lines.length;
-          const f = new Float64Array(n);
-          const H = new Float64Array(n);
-          for (let i = 0; i < n; i++) {
-            const parts = lines[i].trim().split(/[\s,]+/);
-            if (parts.length < 2)
-              throw new Error("Line " + (i + 1) + ": expected f and H(f)");
-            f[i] = parseFloat(parts[0]);
-            H[i] = Math.max(0, parseFloat(parts[1]));
-          }
-          // Check increasing f
-          for (let i = 1; i < n; i++) {
-            if (f[i] <= f[i - 1])
-              throw new Error("Frequencies must be strictly increasing");
-          }
-          raoCustom = { f, H };
-          status.textContent =
-            "Loaded: " +
-            n +
-            " RAO points, range [" +
-            f[0].toFixed(3) +
-            " \u2013 " +
-            f[n - 1].toFixed(3) +
-            "] Hz";
-          status.style.color = "#2e7d32";
-          document.getElementById("raoToggle").checked = true;
-          document.getElementById("raoPanel").style.display = "block";
-          updateAll();
-        } catch (e) {
-          status.textContent = "Error: " + e.message;
-          status.style.color = "#bc1c1c";
-        }
-      }
-
-      setupControl("raoFnSlider", "raoFnVal", updateAll);
-      setupControl("raoZetaSlider", "raoZetaVal", updateAll);
-
       function copyReport(btn) {
         const html = document.getElementById("reportContent").innerHTML;
         const plain = html
@@ -3286,8 +2973,6 @@
           "tTpSlider",
           "tGammaSlider",
           "depthSlider",
-          "raoFnSlider",
-          "raoZetaSlider",
           "tdDurSlider",
           "tdDtSlider",
           "fftSmoothSlider",
@@ -3363,8 +3048,6 @@
           "tTpSlider",
           "tGammaSlider",
           "depthSlider",
-          "raoFnSlider",
-          "raoZetaSlider",
           "tdDurSlider",
           "tdDtSlider",
           "fftSmoothSlider",
@@ -3419,7 +3102,6 @@
       });
 
       onTypeChange();
-      onRaoTypeChange();
       addNumberInputs();
     </script>
   </body>
